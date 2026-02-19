@@ -1,0 +1,20 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: business --default;
+}
+@theme {
+  --font-jetbrains: "JetBrains Mono", monospace;
+  --font-ibm: "IBM Plex Mono", monospace;
+  --font-mono: 'Space Mono', monospace;
+}
+
+.grid-lines {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.013) 2px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.013) 2px, transparent 1px);
+  background-size: 80px 80px;
+  pointer-events: none;
+  z-index: 0;
+}
