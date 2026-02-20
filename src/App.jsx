@@ -1,17 +1,32 @@
-import Hero from "./components/Hero";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { AnimatePresence } from "motion/react";
+import Home from "./pages/Home";
+import Create from "./pages/Create";
+import PageTranstion from "./components/animatedComponents/PageTransition";
 
 function App() {
+  const location = useLocation();
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-1">
-        <Hero />
-      </main>
-      <div className="grid-lines"></div>
-      <Footer />
-    </div>
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route
+          path="/"
+          element={
+            <PageTranstion>
+              <Home />
+            </PageTranstion>
+          }
+        />
+        <Route
+          path="/create"
+          element={
+            <PageTranstion>
+              <Create />
+            </PageTranstion>
+          }
+        />
+      </Routes>
+    </AnimatePresence>
   );
 }
 
