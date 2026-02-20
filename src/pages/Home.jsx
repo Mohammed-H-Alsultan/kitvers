@@ -9,7 +9,6 @@ export default function Home() {
       <main className="flex-1">
         <Hero />
       </main>
-      <div className="grid-lines"></div>
       <Footer />
     </div>
   );

@@ -7,26 +7,29 @@ import PageTranstion from "./components/animatedComponents/PageTransition";
 function App() {
   const location = useLocation();
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route
-          path="/"
-          element={
-            <PageTranstion>
-              <Home />
-            </PageTranstion>
-          }
-        />
-        <Route
-          path="/create"
-          element={
-            <PageTranstion>
-              <Create />
-            </PageTranstion>
-          }
-        />
-      </Routes>
-    </AnimatePresence>
+    <>
+      <div className="grid-lines"></div>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route
+            path="/"
+            element={
+              <PageTranstion>
+                <Home />
+              </PageTranstion>
+            }
+          />
+          <Route
+            path="/create"
+            element={
+              <PageTranstion>
+                <Create />
+              </PageTranstion>
+            }
+          />
+        </Routes>
+      </AnimatePresence>
+    </>
   );
 }
 

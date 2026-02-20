@@ -6,7 +6,7 @@ export default function Footer() {
             <div>
                 <FooterCards />
             </div>
-            <p className="ml-auto text-[#474747] hidden md:block"> created by Mohammed Alsultan ©2026</p>
+            <p className="ml-auto text-[#474747] hidden lg:block"> created by Mohammed Alsultan ©2026</p>
         </footer>
     )
 }

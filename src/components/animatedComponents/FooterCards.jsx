@@ -1,8 +1,9 @@
 import { motion, useAnimate } from "motion/react";
 import { FaReact, FaIcons, FaVuejs } from "react-icons/fa";
-import { RiNextjsLine } from "react-icons/ri";
+import { RiNextjsLine, RiTailwindCssFill } from "react-icons/ri";
 import { TbBrandVite } from "react-icons/tb";
 import { SiReactrouter } from "react-icons/si";
+
 
 // handle anamiation for each card
 function Card({ item }) {
@@ -50,7 +51,7 @@ export default function FooterCards() {
     { name: "Next.js", Icon: RiNextjsLine, hoverColor: "#ffffff" },
     { name: "Vue", Icon: FaVuejs, hoverColor: "#42b883" },
     { name: "Vite", Icon: TbBrandVite, hoverColor: "#646CFF" },
-    { name: "React-Icons", Icon: FaIcons, hoverColor: "#e63946" },
+    { name: "Tailwind", Icon: RiTailwindCssFill, hoverColor: "#61DAFB" },
     { name: "React-Router", Icon: SiReactrouter, hoverColor: "#F44250" },
   ];
 
