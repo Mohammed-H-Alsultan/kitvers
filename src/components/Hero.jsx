@@ -4,6 +4,7 @@ import { FaFolderOpen } from "react-icons/fa";
 export default function Hero() {
   return (
     <div className="flex flex-col justify-center items-center h-[70vh]">
+        {/* title */}
         <p className="font-mono text-[#474747] text-start mr-79 mb-5">// Project workspace</p>
       <h1 className="font-jetbrains font-extrabold text-9xl text-white">
         Kit
@@ -11,7 +12,7 @@ export default function Hero() {
           Vers
         </span>
       </h1>
-
+        {/* des */}
       <div className="mt-10 w-110 mr-5 border-l border-white/30 p-3">
         <p className="font-mono font-light ">
           Stop wiring up the same stack twice.
@@ -26,6 +27,7 @@ export default function Hero() {
         </p>
       </div>
 
+        {/* Buttons */}
       <div className="mt-10">
         <button
           className="btn bg-white text-black mr-9 
