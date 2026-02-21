@@ -4,17 +4,16 @@ import { open } from "@tauri-apps/plugin-dialog";
 export default function ProjectInfo({
   selectedFramework,
   setSelectedFramework,
+  packageManager,
+  setPackageManager,
 }) {
-  // states
   const [projectPath, setProjectPath] = useState("");
 
-  // borwse function
   const handleBrowse = async () => {
     const path = await open({ directory: true, multiple: false });
     if (path) setProjectPath(path);
   };
 
-  // radio data
   const frameworks = [
     { id: "nextjs", label: "Next.js (React)" },
     { id: "nuxt", label: "Nuxt (Vue)" },
@@ -29,28 +28,20 @@ export default function ProjectInfo({
       </div>
 
       <div className="bg-[#0e0e0e] border border-zinc-800 rounded-xl p-6 space-y-5 flex flex-col justify-center items-center w-3xl">
-        {/* animation parent */}
-        <fieldset
-          className="font-mono text-sm text-zinc-400 flex flex-col justify-start items-center"
-        >
+        <fieldset className="font-mono text-sm text-zinc-400 flex flex-col justify-start items-center">
           {/* project name input */}
-          <label className="label w-xl mb-2">
-            Project name
-          </label>
+          <label className="label w-xl mb-2">Project name</label>
           <input
-        
             type="text"
             className="input w-xl focus:outline-none border-zinc-500 bg-zinc-800/60"
             name="project_name"
             placeholder="untitled project"
           />
+
           {/* project path input */}
-          <label className="label w-xl mt-10 mb-3">
-            Project path
-          </label>
+          <label className="label w-xl mt-10 mb-3">Project path</label>
           <div className="join">
             <input
-            
               type="text"
               className="input join-item w-120 focus:outline-none border-zinc-500 bg-zinc-800/60"
               placeholder="/Users/you/project..."
@@ -58,17 +49,15 @@ export default function ProjectInfo({
               onChange={(e) => setProjectPath(e.target.value)}
             />
             <button
-            
               className="btn join-item bg-white text-black"
               onClick={handleBrowse}
             >
               Browse...
             </button>
           </div>
+
           {/* framework inputs */}
-          <label className="label w-xl mt-10 mb-3">
-            Framework
-          </label>
+          <label className="label w-xl mt-10 mb-3">Framework</label>
           <div className="flex flex-wrap w-xl gap-3">
             {frameworks.map(({ id, label }) => {
               const isSelected = selectedFramework === id;
@@ -83,36 +72,33 @@ export default function ProjectInfo({
                   }`}
                 >
                   <input
-                
                     type="radio"
                     name="framework"
                     className="radio radio-xs"
                     checked={isSelected}
                     onChange={() => setSelectedFramework(id)}
                   />
-                  <label
-                
-                    className="label ml-1 cursor-pointer"
-                  >
-                    {label}
-                  </label>
+                  <label className="label ml-1 cursor-pointer">{label}</label>
                 </div>
               );
             })}
           </div>
-          {/* package manger inputs */}
+
+          {/* package manager input */}
           <label className="label w-xl mt-10">
             Package Manager
             <select
-            
-              defaultValue="npm"
+              value={packageManager}
+              onChange={(e) => setPackageManager(e.target.value)}
               className="select outline-none focus:outline-none focus:ring-0 focus:shadow-none cursor-pointer text-white"
             >
-              <option disabled={true}>Pick a Package Manager</option>
-              <option>npm</option>
-              <option>pnpm</option>
-              <option>yarn</option>
-              <option>bun</option>
+              <option disabled value="">
+                Pick a Package Manager
+              </option>
+              <option value="npm">npm</option>
+              <option value="pnpm">pnpm</option>
+              <option value="yarn">yarn</option>
+              <option value="bun">bun</option>
             </select>
           </label>
         </fieldset>

@@ -2,10 +2,13 @@ import { useState } from "react";
 import AnimatedLink from "../components/animatedComponents/AnimatedLink";
 import ProjectInfo from "../components/createComponents/ProjectInfo";
 import ProjectOptions from "../components/createComponents/ProjectOptions";
+import ProjectPacks from "../components/createComponents/ProjectPacks";
 
 export default function create() {
   const [selectedFramework, setSelectedFramework] = useState("nextjs");
   const [selectedLanguage, setSelectedLanguage] = useState("typescript");
+  const [packageManager, setPackageManager] = useState("npm");
+  const [selectedPacks, setSelectedPacks] = useState(new Set());
   const [options, setOptions] = useState({
     eslint: true,
     srcDir: false,
@@ -14,7 +17,6 @@ export default function create() {
     importAlias: "@/*",
   });
 
-  //   these defaults are just for now they could be changed later to be more specific to the framework :)
   const FRAMEWORK_DEFAULTS = {
     nextjs: {
       eslint: true,
@@ -54,6 +56,7 @@ export default function create() {
     setSelectedFramework(fw);
     setOptions(FRAMEWORK_DEFAULTS[fw]);
     setSelectedLanguage(LANGUAGE_DEFAULTS[fw]);
+    setSelectedPacks(new Set());
   };
 
   return (
@@ -67,6 +70,8 @@ export default function create() {
       <ProjectInfo
         selectedFramework={selectedFramework}
         setSelectedFramework={handleFrameworkChange}
+        packageManager={packageManager}
+        setPackageManager={setPackageManager}
       />
       <ProjectOptions
         selectedFramework={selectedFramework}
@@ -74,6 +79,13 @@ export default function create() {
         setSelectedLanguage={setSelectedLanguage}
         options={options}
         setOptions={setOptions}
+      />
+
+      <ProjectPacks
+        selectedFramework={selectedFramework}
+        selectedPacks={selectedPacks}
+        setSelectedPacks={setSelectedPacks}
+        packageManager={packageManager}
       />
     </main>
   );
