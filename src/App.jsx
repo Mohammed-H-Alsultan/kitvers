@@ -3,6 +3,7 @@ import { AnimatePresence } from "motion/react";
 import Home from "./pages/Home";
 import Create from "./pages/Create";
 import PageTranstion from "./components/animatedComponents/PageTransition";
+import ProjectCreation from "./pages/create/ProjectCreation"
 
 function App() {
   const location = useLocation();
@@ -24,6 +25,15 @@ function App() {
             element={
               <PageTranstion>
                 <Create />
+              </PageTranstion>
+            }
+          />
+
+          <Route
+            path="/create/run"
+            element={
+              <PageTranstion>
+                <ProjectCreation />
               </PageTranstion>
             }
           />
