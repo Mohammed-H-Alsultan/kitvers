@@ -76,7 +76,7 @@ export default function ProjectPacks({
   return (
     <section
       id="packs-section"
-      className="flex flex-col justify-center items-center mt-10"
+      className="flex flex-col justify-center items-center mt-10 mb-20"
     >
       <div className="flex flex-col w-3xl justify-center items-center">
         {/* header */}

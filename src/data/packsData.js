@@ -93,6 +93,40 @@ export const PACKS = [
     frameworks: ["vue", "nuxt"],
   },
 
+  // ── Styling ────────────────────────────────────
+  {
+    id: "tailwind",
+    name: "Tailwind CSS",
+    desc: "Utility-first CSS framework",
+    npm: "npm i tailwindcss @tailwindcss/vite",
+    category: "Styling",
+    frameworks: ["react", "nextjs"],
+  },
+  {
+    id: "tailwind-vue",
+    name: "Tailwind CSS",
+    desc: "Utility-first CSS framework",
+    npm: "npm i tailwindcss @tailwindcss/vite",
+    category: "Styling",
+    frameworks: ["vue", "nuxt"],
+  },
+  {
+    id: "motion",
+    name: "Motion",
+    desc: "Production-ready animation library",
+    npm: "npm i motion",
+    category: "Styling",
+    frameworks: ["react", "nextjs"],
+  },
+  {
+    id: "vueuse-motion",
+    name: "@vueuse/motion",
+    desc: "Animations & motion directives powered by Motion One",
+    npm: "npm i @vueuse/motion",
+    category: "Styling",
+    frameworks: ["vue", "nuxt"],
+  },
+
   // ── UI ─────────────────────────────────────────
   {
     id: "shadcn",
@@ -125,8 +159,17 @@ export const PACKS = [
     desc: "Component library built on Tailwind CSS",
     npm: "npm i daisyui",
     category: "UI",
-    frameworks: ["react", "nextjs", "vue", "nuxt"],
+    frameworks: ["react", "nextjs"],
     requires: "tailwind",
+  },
+  {
+    id: "daisyui-vue",
+    name: "daisyUI",
+    desc: "Component library built on Tailwind CSS",
+    npm: "npm i daisyui",
+    category: "UI",
+    frameworks: ["vue", "nuxt"],
+    requires: "tailwind-vue",
   },
   {
     id: "shadcn-vue",
@@ -159,40 +202,6 @@ export const PACKS = [
     desc: "TypeScript-first, clean Vue component library",
     npm: "npm i naive-ui",
     category: "UI",
-    frameworks: ["vue", "nuxt"],
-  },
-
-  // ── Styling ────────────────────────────────────
-  {
-    id: "tailwind",
-    name: "Tailwind CSS",
-    desc: "Utility-first CSS framework",
-    npm: "npm i tailwindcss @tailwindcss/vite",
-    category: "Styling",
-    frameworks: ["react", "nextjs"],
-  },
-  {
-    id: "tailwind-vue",
-    name: "Tailwind CSS",
-    desc: "Utility-first CSS framework",
-    npm: "npm i tailwindcss @tailwindcss/vite",
-    category: "Styling",
-    frameworks: ["vue", "nuxt"],
-  },
-  {
-    id: "motion",
-    name: "Motion",
-    desc: "Production-ready animation library",
-    npm: "npm i motion",
-    category: "Styling",
-    frameworks: ["react", "nextjs"],
-  },
-  {
-    id: "vueuse-motion",
-    name: "@vueuse/motion",
-    desc: "Animations & motion directives powered by Motion One",
-    npm: "npm i @vueuse/motion",
-    category: "Styling",
     frameworks: ["vue", "nuxt"],
   },
 
@@ -354,8 +363,8 @@ export const CATEGORY_ICONS = {
   "Data Fetching": TbCloudDownload,
   State: TbAtom,
   Forms: TbForms,
-  UI: TbLayout,
   Styling: TbBrush,
+  UI: TbLayout,
   Icons: TbIcons,
   "Charts & Tables": TbChartBar,
   Routing: TbRoute,

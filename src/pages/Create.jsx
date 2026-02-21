@@ -3,6 +3,7 @@ import AnimatedLink from "../components/animatedComponents/AnimatedLink";
 import ProjectInfo from "../components/createComponents/ProjectInfo";
 import ProjectOptions from "../components/createComponents/ProjectOptions";
 import ProjectPacks from "../components/createComponents/ProjectPacks";
+import ProjectFooter from "../components/createComponents/ProjecFooter";
 
 export default function create() {
   const [selectedFramework, setSelectedFramework] = useState("nextjs");
@@ -59,10 +60,19 @@ export default function create() {
     setSelectedPacks(new Set());
   };
 
+  const handleReset = () => {
+    setSelectedLanguage(LANGUAGE_DEFAULTS[selectedFramework]);
+    setPackageManager("npm");
+    setSelectedPacks(new Set());
+    setOptions(FRAMEWORK_DEFAULTS[selectedFramework]);
+  };
+
   return (
-    <main className="p-6">
-      <AnimatedLink to={"/"} />
-      <div className="p-5 mt-3">
+    <main>
+      <div className="p-6">
+        <AnimatedLink to={"/"} />
+      </div>
+      <div className="p-5 mt-3 text-center">
         <h1 className="text-4xl font-jetbrains font-bold">
           KitVers Create Project...
         </h1>
@@ -87,6 +97,8 @@ export default function create() {
         setSelectedPacks={setSelectedPacks}
         packageManager={packageManager}
       />
+
+      <ProjectFooter onReset={handleReset} />
     </main>
   );
 }
