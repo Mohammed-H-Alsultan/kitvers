@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { PACKS, CATEGORY_ICONS, convertInstallCmd } from "../../data/packsData";
+import { PACKS, convertInstallCmd } from "../../data/packsData";
+import { CATEGORY_ICONS } from "../../data/packIcons";
 import { LuPackageX } from "react-icons/lu";
 
 export default function ProjectPacks({
@@ -29,17 +30,28 @@ export default function ProjectPacks({
 
   const togglePack = (id) => {
     const pack = PACKS.find((p) => p.id === id);
+
     setSelectedPacks((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
+
+      const requires = Array.isArray(pack?.requires) ? pack.requires : [];
+      const isSelected = next.has(id);
+
+      if (isSelected) {
         next.delete(id);
+
         PACKS.forEach((p) => {
-          if (p.requires === id) next.delete(p.id);
+          const reqs = Array.isArray(p.requires) ? p.requires : [];
+          if (reqs.includes(id)) next.delete(p.id);
         });
-      } else {
-        if (pack?.requires && !next.has(pack.requires)) next.add(pack.requires);
-        next.add(id);
+
+        return next;
       }
+
+      for (const req of requires) next.add(req);
+
+      next.add(id);
+
       return next;
     });
   };
@@ -214,8 +226,12 @@ export default function ProjectPacks({
                       <div className="space-y-1">
                         {packs.map((pack) => {
                           const isSelected = selectedPacks?.has(pack.id);
+                          const reqs = Array.isArray(pack.requires)
+                            ? pack.requires
+                            : [];
                           const isDisabled =
-                            pack.requires && !selectedPacks?.has(pack.requires);
+                            reqs.length > 0 &&
+                            reqs.some((r) => !selectedPacks?.has(r));
 
                           return (
                             <motion.div
@@ -270,13 +286,19 @@ export default function ProjectPacks({
                                       popular
                                     </span>
                                   )}
-                                  {pack.requires && (
-                                    <span className="text-[9px] tracking-widest text-sky-400 border border-sky-900 bg-sky-950/50 px-1.5 py-0.5 rounded-md uppercase">
-                                      needs{" "}
-                                      {PACKS.find((p) => p.id === pack.requires)
-                                        ?.name ?? pack.requires}
-                                    </span>
-                                  )}
+                                  {Array.isArray(pack.requires) &&
+                                    pack.requires.length > 0 && (
+                                      <span className="text-[9px] tracking-widest text-sky-400 border border-sky-900 bg-sky-950/50 px-1.5 py-0.5 rounded-md uppercase">
+                                        needs{" "}
+                                        {pack.requires
+                                          .map(
+                                            (rid) =>
+                                              PACKS.find((p) => p.id === rid)
+                                                ?.name ?? rid,
+                                          )
+                                          .join(", ")}
+                                      </span>
+                                    )}
                                 </div>
                                 <div className="text-xs truncate h-4 relative overflow-hidden">
                                   <AnimatePresence mode="wait">

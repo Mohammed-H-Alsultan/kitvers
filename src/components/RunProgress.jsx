@@ -28,14 +28,16 @@ function StepIcon({ status }) {
 export default function RunProgress({
   phase = "running",
   activeStep = 0,
-  completedSteps = new Set(),
+  completedSteps,
   logs = [],
   onCopyLogs,
   onCancel,
   onOpenFolder,
-  onBack,
 }) {
   const navigate = useNavigate();
+
+  const done = completedSteps ?? new Set();
+  const lines = logs ?? [];
 
   const getStepStatus = (index) => {
     if (completedSteps.has(index)) return "done";

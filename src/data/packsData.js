@@ -1,378 +1,761 @@
+// ── Packs ───────────────────────────────────────────────────────────────────
 export const PACKS = [
-  // ── Data Fetching ──────────────────────────────
   {
     id: "tanstack-query",
     name: "TanStack Query",
     desc: "Async state, caching & server data fetching",
-    npm: "npm i @tanstack/react-query",
     category: "Data Fetching",
     frameworks: ["react", "nextjs"],
+    requires: [],
+    install: {
+      deps: ["@tanstack/react-query"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["@tanstack/react-query"],
+    },
+    npm: "npm i @tanstack/react-query",
   },
   {
     id: "tanstack-query-vue",
     name: "TanStack Query",
     desc: "Async state, caching & server data fetching for Vue",
-    npm: "npm i @tanstack/vue-query",
     category: "Data Fetching",
     frameworks: ["vue", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["@tanstack/vue-query"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["@tanstack/vue-query"],
+    },
+    npm: "npm i @tanstack/vue-query",
   },
   {
     id: "axios",
     name: "Axios",
     desc: "Promise-based HTTP client",
-    npm: "npm i axios",
     category: "Data Fetching",
     frameworks: ["react", "nextjs", "vue", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["axios"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["axios"],
+    },
+    npm: "npm i axios",
   },
-
-  // ── State ──────────────────────────────────────
   {
     id: "zustand",
     name: "Zustand",
     desc: "Small, fast, scalable state management",
-    npm: "npm i zustand",
     category: "State",
     frameworks: ["react", "nextjs"],
+    requires: [],
+    install: {
+      deps: ["zustand"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["zustand"],
+    },
+    npm: "npm i zustand",
   },
   {
     id: "jotai",
     name: "Jotai",
-    desc: "Primitive and flexible atomic state",
-    npm: "npm i jotai",
+    desc: "Primitive and flexible state management",
     category: "State",
     frameworks: ["react", "nextjs"],
+    requires: [],
+    install: {
+      deps: ["jotai"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["jotai"],
+    },
+    npm: "npm i jotai",
   },
   {
     id: "redux-toolkit",
     name: "Redux Toolkit",
     desc: "The official opinionated Redux toolset",
-    npm: "npm i @reduxjs/toolkit react-redux",
     category: "State",
     frameworks: ["react", "nextjs"],
+    requires: [],
+    install: {
+      deps: ["@reduxjs/toolkit", "react-redux"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["@reduxjs/toolkit", "react-redux"],
+    },
+    npm: "npm i @reduxjs/toolkit react-redux",
   },
   {
     id: "pinia",
     name: "Pinia",
-    desc: "The official intuitive Vue state manager",
-    npm: "npm i pinia",
+    desc: "The intuitive store for Vue",
     category: "State",
     frameworks: ["vue", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["pinia"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["pinia"],
+    },
+    npm: "npm i pinia",
   },
   {
     id: "vuex",
     name: "Vuex",
-    desc: "Legacy state management for Vue (prefer Pinia for new projects)",
-    npm: "npm i vuex",
+    desc: "State management pattern + library for Vue",
     category: "State",
     frameworks: ["vue", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["vuex"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["vuex"],
+    },
+    npm: "npm i vuex",
   },
-
-  // ── Forms ──────────────────────────────────────
   {
     id: "react-hook-form",
     name: "React Hook Form",
-    desc: "Performant, flexible & extensible forms",
-    npm: "npm i react-hook-form",
+    desc: "Performant forms with easy validation",
     category: "Forms",
     frameworks: ["react", "nextjs"],
+    requires: [],
+    install: {
+      deps: ["react-hook-form"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["react-hook-form"],
+    },
+    npm: "npm i react-hook-form",
   },
   {
     id: "zod",
     name: "Zod",
     desc: "TypeScript-first schema validation",
-    npm: "npm i zod",
     category: "Forms",
     frameworks: ["react", "nextjs", "vue", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["zod"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["zod"],
+    },
+    npm: "npm i zod",
   },
   {
     id: "vee-validate",
     name: "VeeValidate",
-    desc: "Form validation for Vue with composables API",
-    npm: "npm i vee-validate",
+    desc: "Form validation library for Vue",
     category: "Forms",
     frameworks: ["vue", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["vee-validate"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["vee-validate"],
+    },
+    npm: "npm i vee-validate",
   },
-
-  // ── Styling ────────────────────────────────────
   {
     id: "tailwind",
     name: "Tailwind CSS",
     desc: "Utility-first CSS framework",
-    npm: "npm i tailwindcss @tailwindcss/vite",
     category: "Styling",
     frameworks: ["react", "nextjs"],
+    requires: [],
+    install: {
+      deps: ["tailwindcss", "@tailwindcss/vite"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["tailwindcss", "@tailwindcss/vite"],
+    },
+    npm: "npm i tailwindcss @tailwindcss/vite",
   },
   {
     id: "tailwind-vue",
     name: "Tailwind CSS",
-    desc: "Utility-first CSS framework",
-    npm: "npm i tailwindcss @tailwindcss/vite",
+    desc: "Utility-first CSS framework for Vue",
     category: "Styling",
     frameworks: ["vue", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["tailwindcss", "@tailwindcss/vite"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["tailwindcss", "@tailwindcss/vite"],
+    },
+    npm: "npm i tailwindcss @tailwindcss/vite",
   },
   {
     id: "motion",
-    name: "Motion",
-    desc: "Production-ready animation library",
-    npm: "npm i motion",
+    name: "Framer Motion",
+    desc: "Production-ready motion library for React",
     category: "Styling",
     frameworks: ["react", "nextjs"],
+    requires: [],
+    install: {
+      deps: ["framer-motion"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["framer-motion"],
+    },
+    npm: "npm i framer-motion",
   },
   {
     id: "vueuse-motion",
-    name: "@vueuse/motion",
-    desc: "Animations & motion directives powered by Motion One",
-    npm: "npm i @vueuse/motion",
+    name: "VueUse Motion",
+    desc: "Motion and transitions for Vue",
     category: "Styling",
     frameworks: ["vue", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["@vueuse/motion"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["@vueuse/motion"],
+    },
+    npm: "npm i @vueuse/motion",
   },
-
-  // ── UI ─────────────────────────────────────────
   {
     id: "shadcn",
     name: "shadcn/ui",
     desc: "Beautifully designed accessible components",
-    npm: "npx shadcn@latest init",
     category: "UI",
     frameworks: ["react", "nextjs"],
-    requires: "tailwind",
+    requires: ["tailwind"],
+    install: {
+      deps: [],
+      devDeps: [],
+      commands: [
+        {
+          kind: "dlx",
+          cmd: "shadcn@latest init",
+        },
+      ],
+    },
+    detects: {},
+    npm: "npx shadcn@latest init",
   },
   {
     id: "radix",
     name: "Radix UI",
-    desc: "Unstyled, accessible headless UI primitives",
-    npm: "npm i @radix-ui/react-dialog",
+    desc: "Unstyled accessible components",
     category: "UI",
     frameworks: ["react", "nextjs"],
+    requires: [],
+    install: {
+      deps: ["@radix-ui/react-slot"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["@radix-ui/react-slot"],
+    },
+    npm: "npm i @radix-ui/react-slot",
   },
   {
     id: "mantine",
     name: "Mantine",
-    desc: "Full-featured React component library",
-    npm: "npm i @mantine/core @mantine/hooks",
+    desc: "React components library",
     category: "UI",
     frameworks: ["react", "nextjs"],
+    requires: [],
+    install: {
+      deps: ["@mantine/core", "@mantine/hooks"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["@mantine/core", "@mantine/hooks"],
+    },
+    npm: "npm i @mantine/core @mantine/hooks",
   },
   {
     id: "daisyui",
     name: "daisyUI",
-    desc: "Component library built on Tailwind CSS",
-    npm: "npm i daisyui",
+    desc: "Tailwind component library",
     category: "UI",
     frameworks: ["react", "nextjs"],
-    requires: "tailwind",
+    requires: ["tailwind"],
+    install: {
+      deps: ["daisyui"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["daisyui"],
+    },
+    npm: "npm i daisyui",
   },
   {
     id: "daisyui-vue",
     name: "daisyUI",
-    desc: "Component library built on Tailwind CSS",
-    npm: "npm i daisyui",
+    desc: "Tailwind component library for Vue",
     category: "UI",
     frameworks: ["vue", "nuxt"],
-    requires: "tailwind-vue",
+    requires: ["tailwind-vue"],
+    install: {
+      deps: ["daisyui"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["daisyui"],
+    },
+    npm: "npm i daisyui",
   },
   {
     id: "shadcn-vue",
     name: "shadcn-vue",
-    desc: "Community port of shadcn/ui for Vue",
-    npm: "npx shadcn-vue@latest init",
+    desc: "shadcn/ui port for Vue",
     category: "UI",
     frameworks: ["vue", "nuxt"],
-    requires: "tailwind-vue",
+    requires: ["tailwind-vue"],
+    install: {
+      deps: [],
+      devDeps: [],
+      commands: [
+        {
+          kind: "dlx",
+          cmd: "shadcn-vue@latest init",
+        },
+      ],
+    },
+    detects: {},
+    npm: "npx shadcn-vue@latest init",
   },
   {
     id: "vuetify",
     name: "Vuetify",
-    desc: "Material Design component library for Vue",
-    npm: "npm i vuetify",
+    desc: "Material Design component framework for Vue",
     category: "UI",
     frameworks: ["vue", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["vuetify"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["vuetify"],
+    },
+    npm: "npm i vuetify",
   },
   {
     id: "primevue",
     name: "PrimeVue",
-    desc: "Rich UI component library with 90+ components",
-    npm: "npm i primevue",
+    desc: "Rich set of UI components for Vue",
     category: "UI",
     frameworks: ["vue", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["primevue"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["primevue"],
+    },
+    npm: "npm i primevue",
   },
   {
     id: "naive-ui",
     name: "Naive UI",
-    desc: "TypeScript-first, clean Vue component library",
-    npm: "npm i naive-ui",
+    desc: "Vue 3 component library",
     category: "UI",
     frameworks: ["vue", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["naive-ui"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["naive-ui"],
+    },
+    npm: "npm i naive-ui",
   },
-
-  // ── Icons ──────────────────────────────────────
   {
     id: "lucide",
-    name: "lucide-react",
-    desc: "Clean, consistent open-source icon set",
-    npm: "npm i lucide-react",
+    name: "Lucide Icons",
+    desc: "Beautiful open-source icons",
     category: "Icons",
     frameworks: ["react", "nextjs"],
+    requires: [],
+    install: {
+      deps: ["lucide-react"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["lucide-react"],
+    },
+    npm: "npm i lucide-react",
   },
   {
     id: "react-icons",
-    name: "react-icons",
-    desc: "All popular icon packs as React components",
-    npm: "npm i react-icons",
+    name: "React Icons",
+    desc: "Popular icons for React",
     category: "Icons",
     frameworks: ["react", "nextjs"],
+    requires: [],
+    install: {
+      deps: ["react-icons"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["react-icons"],
+    },
+    npm: "npm i react-icons",
   },
   {
     id: "lucide-vue",
-    name: "lucide-vue-next",
-    desc: "Clean, consistent open-source icon set for Vue",
-    npm: "npm i lucide-vue-next",
+    name: "Lucide Icons",
+    desc: "Beautiful open-source icons for Vue",
     category: "Icons",
     frameworks: ["vue", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["lucide-vue-next"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["lucide-vue-next"],
+    },
+    npm: "npm i lucide-vue-next",
   },
   {
     id: "unplugin-icons",
     name: "unplugin-icons",
-    desc: "Auto-import any icon set on demand, Nuxt-friendly",
-    npm: "npm i unplugin-icons",
+    desc: "Use icons as components on-demand",
     category: "Icons",
-    frameworks: ["vue", "nuxt"],
+    frameworks: ["react", "nextjs", "vue", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["unplugin-icons"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["unplugin-icons"],
+    },
+    npm: "npm i unplugin-icons",
   },
-
-  // ── Charts & Tables ────────────────────────────
   {
     id: "recharts",
-    name: "recharts",
-    desc: "Composable chart library built with D3",
-    npm: "npm i recharts",
+    name: "Recharts",
+    desc: "Chart library built with React and D3",
     category: "Charts & Tables",
     frameworks: ["react", "nextjs"],
+    requires: [],
+    install: {
+      deps: ["recharts"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["recharts"],
+    },
+    npm: "npm i recharts",
   },
   {
     id: "tanstack-table",
     name: "TanStack Table",
-    desc: "Headless UI for powerful data tables",
-    npm: "npm i @tanstack/react-table",
+    desc: "Headless table and datagrid toolkit for React",
     category: "Charts & Tables",
     frameworks: ["react", "nextjs"],
+    requires: [],
+    install: {
+      deps: ["@tanstack/react-table"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["@tanstack/react-table"],
+    },
+    npm: "npm i @tanstack/react-table",
   },
   {
     id: "vue-chartjs",
     name: "vue-chartjs",
-    desc: "Chart.js wrapper for Vue with reactive data",
-    npm: "npm i vue-chartjs chart.js",
+    desc: "Chart.js wrapper for Vue",
     category: "Charts & Tables",
     frameworks: ["vue", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["vue-chartjs", "chart.js"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["vue-chartjs", "chart.js"],
+    },
+    npm: "npm i vue-chartjs chart.js",
   },
   {
     id: "tanstack-table-vue",
     name: "TanStack Table",
-    desc: "Headless UI for powerful data tables",
-    npm: "npm i @tanstack/vue-table",
+    desc: "Headless table and datagrid toolkit for Vue",
     category: "Charts & Tables",
     frameworks: ["vue", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["@tanstack/vue-table"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["@tanstack/vue-table"],
+    },
+    npm: "npm i @tanstack/vue-table",
   },
-
-  // ── Routing ────────────────────────────────────
   {
     id: "react-router",
     name: "React Router",
-    desc: "Declarative routing for React SPAs",
-    npm: "npm i react-router-dom",
+    desc: "Declarative routing for React",
     category: "Routing",
     frameworks: ["react"],
+    requires: [],
+    install: {
+      deps: ["react-router-dom"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["react-router-dom"],
+    },
+    npm: "npm i react-router-dom",
   },
   {
     id: "vue-router",
     name: "Vue Router",
-    desc: "Official router for Vue SPAs",
-    npm: "npm i vue-router",
+    desc: "Official router for Vue",
     category: "Routing",
     frameworks: ["vue"],
+    requires: [],
+    install: {
+      deps: ["vue-router"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["vue-router"],
+    },
+    npm: "npm i vue-router",
   },
-
-  // ── Auth ───────────────────────────────────────
   {
     id: "nextauth",
-    name: "Auth.js",
-    desc: "Authentication for Next.js apps",
-    npm: "npm i next-auth",
+    name: "NextAuth.js",
+    desc: "Authentication for Next.js",
     category: "Auth",
     frameworks: ["nextjs"],
+    requires: [],
+    install: {
+      deps: ["next-auth"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["next-auth"],
+    },
+    npm: "npm i next-auth",
   },
   {
     id: "clerk",
     name: "Clerk",
-    desc: "Complete hosted user management & auth",
-    npm: "npm i @clerk/nextjs",
+    desc: "Authentication & user management",
     category: "Auth",
     frameworks: ["nextjs"],
+    requires: [],
+    install: {
+      deps: ["@clerk/nextjs"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["@clerk/nextjs"],
+    },
+    npm: "npm i @clerk/nextjs",
   },
   {
     id: "nuxt-auth-utils",
-    name: "Nuxt Auth Utils",
-    desc: "Lightweight auth helpers & session management for Nuxt",
-    npm: "npm i nuxt-auth-utils",
+    name: "nuxt-auth-utils",
+    desc: "Auth utilities for Nuxt",
     category: "Auth",
     frameworks: ["nuxt"],
+    requires: [],
+    install: {
+      deps: ["nuxt-auth-utils"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["nuxt-auth-utils"],
+    },
+    npm: "npm i nuxt-auth-utils",
   },
   {
     id: "sidebase-auth",
-    name: "sidebase nuxt-auth",
-    desc: "NextAuth-style authentication module for Nuxt",
-    npm: "npm i @sidebase/nuxt-auth",
+    name: "sidebase/nuxt-auth",
+    desc: "Auth module for Nuxt",
     category: "Auth",
     frameworks: ["nuxt"],
+    requires: [],
+    install: {
+      deps: ["@sidebase/nuxt-auth"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["@sidebase/nuxt-auth"],
+    },
+    npm: "npm i @sidebase/nuxt-auth",
   },
-
-  // ── Database ───────────────────────────────────
   {
     id: "prisma",
     name: "Prisma",
-    desc: "Next-gen TypeScript ORM for Node.js",
-    npm: "npm i prisma @prisma/client",
+    desc: "Next-generation ORM for Node.js and TypeScript",
     category: "Database",
     frameworks: ["nextjs", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["prisma"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["prisma"],
+    },
+    npm: "npm i prisma",
   },
   {
     id: "drizzle",
     name: "Drizzle ORM",
     desc: "Lightweight ORM with SQL-like syntax",
-    npm: "npm i drizzle-orm",
     category: "Database",
     frameworks: ["nextjs", "nuxt"],
+    requires: [],
+    install: {
+      deps: ["drizzle-orm"],
+      devDeps: [],
+      commands: [],
+    },
+    detects: {
+      deps: ["drizzle-orm"],
+    },
+    npm: "npm i drizzle-orm",
   },
 ];
 
-import {
-  TbCloudDownload,
-  TbAtom,
-  TbForms,
-  TbLayout,
-  TbBrush,
-  TbIcons,
-  TbChartBar,
-  TbRoute,
-  TbShieldLock,
-  TbDatabase,
-} from "react-icons/tb";
+// ── Package manager command map ─────────────────────────────────────────────
 
-// ── Category icons ─────────────────────────────────────────────────────────
-
-export const CATEGORY_ICONS = {
-  "Data Fetching": TbCloudDownload,
-  State: TbAtom,
-  Forms: TbForms,
-  Styling: TbBrush,
-  UI: TbLayout,
-  Icons: TbIcons,
-  "Charts & Tables": TbChartBar,
-  Routing: TbRoute,
-  Auth: TbShieldLock,
-  Database: TbDatabase,
+const PM = {
+  npm: { add: "npm i", addDev: "npm i -D", dlx: "npx" },
+  pnpm: { add: "pnpm add", addDev: "pnpm add -D", dlx: "pnpm dlx" },
+  yarn: { add: "yarn add", addDev: "yarn add -D", dlx: "yarn dlx" },
+  bun: { add: "bun add", addDev: "bun add -d", dlx: "bunx" },
 };
 
-// ── Install command converter ──────────────────────────────────────────────
+// ── Engine helpers ──────────────────────────────────────────────────────────
+
+export function buildPackCommands(pack, packageManager = "npm") {
+  const cfg = PM[packageManager] ?? PM.npm;
+  const install = pack?.install ?? { deps: [], devDeps: [], commands: [] };
+
+  const out = [];
+
+  if (install.deps?.length) out.push(`${cfg.add} ${install.deps.join(" ")}`);
+  if (install.devDeps?.length)
+    out.push(`${cfg.addDev} ${install.devDeps.join(" ")}`);
+
+  for (const c of install.commands ?? []) {
+    if (c.kind === "dlx") out.push(`${cfg.dlx} ${c.cmd}`);
+    if (c.kind === "shell") out.push(c.cmd);
+  }
+
+  return out;
+}
+
+export function resolvePackOrder(selectedPackIds) {
+  const selected = new Set(selectedPackIds ?? []);
+  const byId = new Map(PACKS.map((p) => [p.id, p]));
+
+  const ordered = [];
+  const visiting = new Set();
+  const visited = new Set();
+
+  function visit(id) {
+    if (visited.has(id)) return;
+    if (visiting.has(id)) {
+      throw new Error(`Circular pack dependency detected at: ${id}`);
+    }
+
+    const pack = byId.get(id);
+    if (!pack) throw new Error(`Unknown pack id: ${id}`);
+
+    visiting.add(id);
+
+    for (const req of pack.requires ?? []) {
+      if (!selected.has(req)) {
+        throw new Error(`Pack "${id}" requires "${req}"`);
+      }
+      visit(req);
+    }
+
+    visiting.delete(id);
+    visited.add(id);
+    ordered.push(id);
+  }
+
+  for (const p of PACKS) {
+    if (selected.has(p.id)) visit(p.id);
+  }
+
+  return ordered;
+}
+
+// ── Legacy helper (UI compatibility) ────────────────────────────────────────
 
 export function convertInstallCmd(cmd, pm) {
   if (pm === "npm") return cmd;

@@ -1,14 +1,15 @@
-import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 
 export default function ProjectInfo({
+  projectName,
+  setProjectName,
+  projectPath,
+  setProjectPath,
   selectedFramework,
   setSelectedFramework,
   packageManager,
   setPackageManager,
 }) {
-  const [projectPath, setProjectPath] = useState("");
-
   const handleBrowse = async () => {
     const path = await open({ directory: true, multiple: false });
     if (path) setProjectPath(path);
@@ -36,6 +37,8 @@ export default function ProjectInfo({
             className="input w-xl focus:outline-none border-zinc-500 bg-zinc-800/60"
             name="project_name"
             placeholder="untitled project"
+            value={projectName}
+            onChange={(e) => setProjectName(e.target.value)}
           />
 
           {/* project path input */}
@@ -49,6 +52,7 @@ export default function ProjectInfo({
               onChange={(e) => setProjectPath(e.target.value)}
             />
             <button
+              type="button"
               className="btn join-item bg-white text-black"
               onClick={handleBrowse}
             >

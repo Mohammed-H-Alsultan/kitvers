@@ -1,9 +1,9 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "motion/react";
 import Home from "./pages/Home";
-import Create from "./pages/Create";
+import Create from "./pages/create/Create";
 import PageTranstion from "./components/animatedComponents/PageTransition";
-import ProjectCreation from "./pages/create/ProjectCreation"
+import ProjectCreation from "./pages/create/ProjectCreation";
 
 function App() {
   const location = useLocation();

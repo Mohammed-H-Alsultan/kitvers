@@ -1,11 +1,14 @@
 import { useState } from "react";
-import AnimatedLink from "../components/animatedComponents/AnimatedLink";
-import ProjectInfo from "../components/createComponents/ProjectInfo";
-import ProjectOptions from "../components/createComponents/ProjectOptions";
-import ProjectPacks from "../components/createComponents/ProjectPacks";
-import ProjectFooter from "../components/createComponents/ProjecFooter";
+import AnimatedLink from "../../components/animatedComponents/AnimatedLink";
+import ProjectInfo from "../../components/createComponents/ProjectInfo";
+import ProjectOptions from "../../components/createComponents/ProjectOptions";
+import ProjectPacks from "../../components/createComponents/ProjectPacks";
+import ProjectFooter from "../../components/createComponents/ProjecFooter";
 
-export default function create() {
+export default function Create() {
+  const [projectName, setProjectName] = useState("");
+  const [projectPath, setProjectPath] = useState("");
+
   const [selectedFramework, setSelectedFramework] = useState("nextjs");
   const [selectedLanguage, setSelectedLanguage] = useState("typescript");
   const [packageManager, setPackageManager] = useState("npm");
@@ -61,10 +64,24 @@ export default function create() {
   };
 
   const handleReset = () => {
+    setProjectName("");
+    setProjectPath("");
     setSelectedLanguage(LANGUAGE_DEFAULTS[selectedFramework]);
     setPackageManager("npm");
     setSelectedPacks(new Set());
     setOptions(FRAMEWORK_DEFAULTS[selectedFramework]);
+  };
+
+  const payload = {
+    projectName: projectName.trim(),
+    projectPath: projectPath.trim(),
+    framework: selectedFramework,
+    language: selectedLanguage,
+    packageManager,
+    packs: Array.from(selectedPacks),
+    options,
+    createdAt: new Date().toISOString(),
+    tool: { name: "kitvers", version: "0.1.0" },
   };
 
   return (
@@ -72,17 +89,24 @@ export default function create() {
       <div className="p-6">
         <AnimatedLink to={"/"} />
       </div>
+
       <div className="p-5 mt-3 text-center">
         <h1 className="text-4xl font-jetbrains font-bold">
           KitVers Create Project...
         </h1>
       </div>
+
       <ProjectInfo
+        projectName={projectName}
+        setProjectName={setProjectName}
+        projectPath={projectPath}
+        setProjectPath={setProjectPath}
         selectedFramework={selectedFramework}
         setSelectedFramework={handleFrameworkChange}
         packageManager={packageManager}
         setPackageManager={setPackageManager}
       />
+
       <ProjectOptions
         selectedFramework={selectedFramework}
         selectedLanguage={selectedLanguage}
@@ -98,7 +122,7 @@ export default function create() {
         packageManager={packageManager}
       />
 
-      <ProjectFooter onReset={handleReset} />
+      <ProjectFooter onReset={handleReset} payload={payload} />
     </main>
   );
 }
