@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { runCmd } from "./runner.js";
+import { scaffoldVite } from "./scaffold-vite.js";
 
 process.stdin.setEncoding("utf8");
 
@@ -12,15 +12,16 @@ process.stdin.on("end", async () => {
 
     console.log("› engine started");
     console.log(`› project: ${payload.projectName ?? "(missing)"}`);
+    console.log(`› framework: ${payload.framework ?? "(missing)"}`);
 
-    console.log("› test: node -v");
-    await runCmd("node", ["-v"], {
-      onLine: (line) => console.log(`› ${line}`),
-      onErrorLine: (line) => console.log(`✗ ${line}`),
-    });
+    if (payload.framework === "react" || payload.framework === "vue") {
+      await scaffoldVite(payload, { log: (l) => console.log(l) });
+      console.log("✓ engine done");
+      process.exit(0);
+    }
 
-    console.log("✓ runner works");
-    process.exit(0);
+    console.log("✗ only vite scaffolding implemented (react/vue)");
+    process.exit(1);
   } catch (err) {
     console.log(`✗ ${err?.message ?? "unknown error"}`);
     process.exit(1);
