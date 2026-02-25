@@ -200,7 +200,7 @@ export const PACKS = [
       commands: [],
     },
     detects: {
-      deps: ["tailwindcss", "@tailwindcss/vite"],
+      devDeps: ["tailwindcss", "@tailwindcss/vite"],
     },
     npm: "npm i -D tailwindcss @tailwindcss/vite",
   },
@@ -217,7 +217,7 @@ export const PACKS = [
       commands: [],
     },
     detects: {
-      deps: ["tailwindcss", "@tailwindcss/vite"],
+      devDeps: ["tailwindcss", "@tailwindcss/vite"],
     },
     npm: "npm i -D tailwindcss @tailwindcss/vite",
   },
@@ -317,14 +317,14 @@ export const PACKS = [
     frameworks: ["react", "nextjs"],
     requires: ["tailwind"],
     install: {
-      deps: ["daisyui"],
-      devDeps: [],
+      deps: [],
+      devDeps: ["daisyui"],
       commands: [],
     },
     detects: {
-      deps: ["daisyui"],
+      devDeps: ["daisyui"],
     },
-    npm: "npm i daisyui",
+    npm: "npm i -D daisyui",
   },
   {
     id: "daisyui-vue",
@@ -334,14 +334,14 @@ export const PACKS = [
     frameworks: ["vue", "nuxt"],
     requires: ["tailwind-vue"],
     install: {
-      deps: ["daisyui"],
-      devDeps: [],
+      deps: [],
+      devDeps: ["daisyui"],
       commands: [],
     },
     detects: {
-      deps: ["daisyui"],
+      devDeps: ["daisyui"],
     },
-    npm: "npm i daisyui",
+    npm: "npm i -D daisyui",
   },
   {
     id: "shadcn-vue",
@@ -705,7 +705,7 @@ export function buildPackCommands(pack, packageManager = "npm") {
 
   const out = [];
 
-  if (install.deps?.length) out.push(`${cfg.add} ${install.deps.join(" ")}`);
+  if (install.deps?.length) out.push(`${cfg.add}    ${install.deps.join(" ")}`);
   if (install.devDeps?.length)
     out.push(`${cfg.addDev} ${install.devDeps.join(" ")}`);
 
@@ -727,9 +727,8 @@ export function resolvePackOrder(selectedPackIds) {
 
   function visit(id) {
     if (visited.has(id)) return;
-    if (visiting.has(id)) {
+    if (visiting.has(id))
       throw new Error(`Circular pack dependency detected at: ${id}`);
-    }
 
     const pack = byId.get(id);
     if (!pack) throw new Error(`Unknown pack id: ${id}`);
@@ -737,9 +736,7 @@ export function resolvePackOrder(selectedPackIds) {
     visiting.add(id);
 
     for (const req of pack.requires ?? []) {
-      if (!selected.has(req)) {
-        throw new Error(`Pack "${id}" requires "${req}"`);
-      }
+      if (!selected.has(req)) throw new Error(`Pack "${id}" requires "${req}"`);
       visit(req);
     }
 

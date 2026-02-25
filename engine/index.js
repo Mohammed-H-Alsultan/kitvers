@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { scaffoldVite } from "./scaffold-vite.js";
 import { installPacks } from "./install-packs.js";
+import { applyPacks } from "./apply-packs.js";
 import { writeKitversMeta } from "./write-metadata.js";
 
 process.stdin.setEncoding("utf8");
@@ -13,18 +14,25 @@ process.stdin.on("end", async () => {
     const payload = JSON.parse(input || "{}");
 
     console.log("› engine started");
-    console.log(`› project: ${payload.projectName ?? "(missing)"}`);
+    console.log(`› project:   ${payload.projectName ?? "(missing)"}`);
     console.log(`› framework: ${payload.framework ?? "(missing)"}`);
+    console.log(`› packs:     ${(payload.packs ?? []).join(", ") || "none"}`);
 
     if (payload.framework === "react" || payload.framework === "vue") {
+      // 1. scaffold vite project + install base deps
       const { targetDir } = await scaffoldVite(payload, {
         log: (l) => console.log(l),
       });
 
-      // pass targetDir to pack installer
       const effectivePayload = { ...payload, targetDir };
+
+      // 2. install pack deps/devDeps/dlx commands
       await installPacks(effectivePayload, { log: (l) => console.log(l) });
 
+      // 3. patch vite.config + css files for packs that need it
+      await applyPacks(effectivePayload, { log: (l) => console.log(l) });
+
+      // 4. write .kitvers.json metadata
       const metaPath = writeKitversMeta(targetDir, effectivePayload);
       console.log(`✓ wrote ${metaPath}`);
 
