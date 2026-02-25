@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { PACKS, resolvePackOrder } from "./packsData.js";
+import { resolvePackOrder } from "./packsData.js";
 
 // file system helpers
 
@@ -39,27 +39,63 @@ function patchViteConfig(targetDir, { importLine, pluginCall, log }) {
   if (!configFile) throw new Error("vite.config not found in: " + targetDir);
 
   let src = read(configFile);
+  let changed = false;
 
-  if (src.includes(importLine)) {
-    log(`› vite.config already has ${pluginCall}, skipping`);
-    return;
+  // normalize check (quote style, semicolons)
+  const importKey = importLine.includes("@tailwindcss/vite")
+    ? "@tailwindcss/vite"
+    : importLine;
+
+  // 1) ensure import exists
+  if (!src.includes(importKey)) {
+    const imports = [...src.matchAll(/^import .*$/gm)];
+    if (imports.length) {
+      const last = imports.at(-1);
+      const insertAt = last.index + last[0].length;
+      src =
+        src.slice(0, insertAt) + "\n" + importLine + "\n" + src.slice(insertAt);
+    } else {
+      src = importLine + "\n" + src;
+    }
+    changed = true;
   }
 
-  // insert import after the last existing import line
-  const lastImportIdx = src.lastIndexOf("\nimport ");
-  const insertAt = src.indexOf("\n", lastImportIdx + 1); 
-  src = src.slice(0, insertAt) + "\n" + importLine + src.slice(insertAt);
+  // 2) ensure pluginCall exists
+  if (!src.includes(pluginCall)) {
+    const before = src;
 
-  // add plugin to plugins: [existingPlugin(), <newPlugin>]
-  src = src.replace(/plugins:\s*\[([^\]]*)\]/s, (match, inner) => {
-    const trimmed = inner.trim();
-    // already there (double-guard)
-    if (trimmed.includes(pluginCall)) return match;
-    return `plugins: [${trimmed ? trimmed + ", " : ""}${pluginCall}]`;
-  });
+    // try patch existing plugins array
+    src = src.replace(/plugins:\s*\[([\s\S]*?)\]/m, (match, inner) => {
+      if (inner.includes(pluginCall)) return match;
+      const trimmed = inner.trim();
+      const next = trimmed ? `${trimmed}, ${pluginCall}` : pluginCall;
+      return `plugins: [${next}]`;
+    });
 
-  write(configFile, src);
-  log(`✓ patched ${path.basename(configFile)} with ${pluginCall}`);
+    // if no plugins array existed, inject into defineConfig({ ... })
+    if (src === before) {
+      src = src.replace(
+        /defineConfig\(\s*\{/m,
+        (m) => `${m}\n  plugins: [${pluginCall}],`,
+      );
+    }
+
+    changed = true;
+  }
+
+  // 3) verify
+  if (!src.includes(pluginCall)) {
+    throw new Error(
+      `Failed to apply plugin "${pluginCall}" in ${path.basename(configFile)}`,
+    );
+  }
+
+  if (changed) {
+    write(configFile, src);
+    log(`✓ patched ${path.basename(configFile)} with ${pluginCall}`);
+  } else {
+    log(`› vite.config already patched for ${pluginCall}, skipping`);
+  }
 }
 
 // css file finder
@@ -111,7 +147,7 @@ const APPLIERS = {
   tailwind: ({ targetDir, log }) => {
     // 1. patch vite.config
     patchViteConfig(targetDir, {
-      importLine: 'import tailwindcss from "@tailwindcss/vite"',
+      importLine: "import tailwindcss from '@tailwindcss/vite';",
       pluginCall: "tailwindcss()",
       log,
     });
@@ -124,7 +160,7 @@ const APPLIERS = {
   // tailwind (vue) — same steps
   "tailwind-vue": ({ targetDir, log }) => {
     patchViteConfig(targetDir, {
-      importLine: 'import tailwindcss from "@tailwindcss/vite"',
+      importLine: "import tailwindcss from '@tailwindcss/vite';",
       pluginCall: "tailwindcss()",
       log,
     });
