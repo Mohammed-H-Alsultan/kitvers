@@ -56,8 +56,6 @@ export async function scaffoldVite(payload, { log = console.log } = {}) {
   log(`› scaffolding vite project`);
   log(`› dir: ${targetDir}`);
   log(`› template: ${template}`);
-  log(`› raw projectPath: ${projectPath}`);
-  log(`› exists? ${fs.existsSync(projectPath)}`);
 
   const pm = packageManager ?? "npm";
 

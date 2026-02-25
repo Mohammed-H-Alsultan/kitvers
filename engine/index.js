@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { scaffoldVite } from "./scaffold-vite.js";
+import { installPacks } from "./install-packs.js";
 
 process.stdin.setEncoding("utf8");
 
@@ -15,7 +16,16 @@ process.stdin.on("end", async () => {
     console.log(`› framework: ${payload.framework ?? "(missing)"}`);
 
     if (payload.framework === "react" || payload.framework === "vue") {
-      await scaffoldVite(payload, { log: (l) => console.log(l) });
+      const { targetDir } = await scaffoldVite(payload, {
+        log: (l) => console.log(l),
+      });
+
+      // pass targetDir to pack installer
+      await installPacks(
+        { ...payload, targetDir },
+        { log: (l) => console.log(l) },
+      );
+
       console.log("✓ engine done");
       process.exit(0);
     }
