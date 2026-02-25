@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { scaffoldVite } from "./scaffold-vite.js";
 import { installPacks } from "./install-packs.js";
+import { writeKitversMeta } from "./write-metadata.js";
 
 process.stdin.setEncoding("utf8");
 
@@ -21,10 +22,11 @@ process.stdin.on("end", async () => {
       });
 
       // pass targetDir to pack installer
-      await installPacks(
-        { ...payload, targetDir },
-        { log: (l) => console.log(l) },
-      );
+      const effectivePayload = { ...payload, targetDir };
+      await installPacks(effectivePayload, { log: (l) => console.log(l) });
+
+      const metaPath = writeKitversMeta(targetDir, effectivePayload);
+      console.log(`✓ wrote ${metaPath}`);
 
       console.log("✓ engine done");
       process.exit(0);
