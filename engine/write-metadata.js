@@ -17,6 +17,7 @@ export function writeKitversMeta(targetDir, payload) {
     language: payload.language,
     packageManager: payload.packageManager,
     packs: Array.from(payload.packs ?? []),
+    packOptions: payload.packOptions ?? {},
   };
 
   const file = path.join(targetDir, ".kitvers.json");

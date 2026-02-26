@@ -2,9 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { resolvePackOrder } from "./packsData.js";
 
-// file system helpers
+// ── fs helpers ───────────────────────────────────────────────────────────────
 
-// find first existing file from a list of candidates
 function findFile(dir, candidates) {
   for (const f of candidates) {
     const full = path.join(dir, f);
@@ -16,14 +15,18 @@ function findFile(dir, candidates) {
 function read(file) {
   return fs.readFileSync(file, "utf8");
 }
-
-function write(file, content) {
-  fs.writeFileSync(file, content, "utf8");
+function write(file, data) {
+  fs.writeFileSync(file, data, "utf8");
+}
+function readJson(file) {
+  return JSON.parse(read(file));
+}
+function writeJson(file, o) {
+  write(file, JSON.stringify(o, null, 2) + "\n");
 }
 
-// vite.config patcher
+// ── vite.config patcher ──────────────────────────────────────────────────────
 
-// finds vite.config.(ts|js|mts|mjs) in project root
 function findViteConfig(targetDir) {
   return findFile(targetDir, [
     "vite.config.ts",
@@ -33,7 +36,7 @@ function findViteConfig(targetDir) {
   ]);
 }
 
-// patches vite.config to add a plugin import + usage
+// adds an import + plugin call to vite.config, idempotent
 function patchViteConfig(targetDir, { importLine, pluginCall, log }) {
   const configFile = findViteConfig(targetDir);
   if (!configFile) throw new Error("vite.config not found in: " + targetDir);
@@ -41,38 +44,34 @@ function patchViteConfig(targetDir, { importLine, pluginCall, log }) {
   let src = read(configFile);
   let changed = false;
 
-  // normalize check (quote style, semicolons)
-  const importKey = importLine.includes("@tailwindcss/vite")
-    ? "@tailwindcss/vite"
-    : importLine;
+  // quote-agnostic detection key
+  const importKey =
+    importLine.match(/from\s+['"]([^'"]+)['"]/)?.[1] ?? importLine;
 
-  // 1) ensure import exists
+  // 1) insert import after last existing import line
   if (!src.includes(importKey)) {
     const imports = [...src.matchAll(/^import .*$/gm)];
     if (imports.length) {
       const last = imports.at(-1);
       const insertAt = last.index + last[0].length;
-      src =
-        src.slice(0, insertAt) + "\n" + importLine + "\n" + src.slice(insertAt);
+      src = src.slice(0, insertAt) + "\n" + importLine + src.slice(insertAt);
     } else {
       src = importLine + "\n" + src;
     }
     changed = true;
   }
 
-  // 2) ensure pluginCall exists
+  // 2) add plugin to plugins array
   if (!src.includes(pluginCall)) {
     const before = src;
 
-    // try patch existing plugins array
     src = src.replace(/plugins:\s*\[([\s\S]*?)\]/m, (match, inner) => {
       if (inner.includes(pluginCall)) return match;
       const trimmed = inner.trim();
-      const next = trimmed ? `${trimmed}, ${pluginCall}` : pluginCall;
-      return `plugins: [${next}]`;
+      return `plugins: [${trimmed ? trimmed + ", " : ""}${pluginCall}]`;
     });
 
-    // if no plugins array existed, inject into defineConfig({ ... })
+    // fallback: no plugins array yet
     if (src === before) {
       src = src.replace(
         /defineConfig\(\s*\{/m,
@@ -83,23 +82,63 @@ function patchViteConfig(targetDir, { importLine, pluginCall, log }) {
     changed = true;
   }
 
-  // 3) verify
   if (!src.includes(pluginCall)) {
     throw new Error(
-      `Failed to apply plugin "${pluginCall}" in ${path.basename(configFile)}`,
+      `Failed to inject "${pluginCall}" into ${path.basename(configFile)}`,
     );
   }
 
   if (changed) {
     write(configFile, src);
-    log(`✓ patched ${path.basename(configFile)} with ${pluginCall}`);
+    log(`✓ patched ${path.basename(configFile)} → ${pluginCall}`);
   } else {
-    log(`› vite.config already patched for ${pluginCall}, skipping`);
+    log(`› ${path.basename(configFile)} already has ${pluginCall}, skipping`);
   }
 }
 
-// css file finder
-// read src/main.(tsx|ts|jsx|js|vue) and extract the imported css filename
+function patchViteAlias(targetDir, { aliasKey, aliasValue, log }) {
+  const configFile = findViteConfig(targetDir);
+  if (!configFile) throw new Error("vite.config not found in: " + targetDir);
+
+  let src = read(configFile);
+
+  // already patched
+  if (src.includes(`"${aliasKey}"`) || src.includes(`'${aliasKey}'`)) {
+    log(`› vite.config already has "${aliasKey}" alias, skipping`);
+    return;
+  }
+
+  // inject: import path from "path" after the last existing import
+  if (!src.includes('from "path"') && !src.includes("from 'path'")) {
+    const imports = [...src.matchAll(/^import .*$/gm)];
+    if (imports.length) {
+      const last = imports.at(-1);
+      const insertAt = last.index + last[0].length;
+      src =
+        src.slice(0, insertAt) +
+        '\nimport path from "path"' +
+        src.slice(insertAt);
+    } else {
+      src = 'import path from "path"\n' + src;
+    }
+  }
+
+  const aliasBlock = [
+    `resolve: {`,
+    `    alias: {`,
+    `      "${aliasKey}": path.resolve(__dirname, "${aliasValue}"),`,
+    `    },`,
+    `  },`,
+  ].join("\n");
+
+  src = src.replace(/defineConfig\(\s*\{/m, (m) => `${m}\n  ${aliasBlock}`);
+
+  write(configFile, src);
+  log(`✓ patched vite.config with "${aliasKey}" alias`);
+}
+
+// ── css patcher ──────────────────────────────────────────────────────────────
+
 function findMainCssFile(targetDir) {
   const mainFile = findFile(path.join(targetDir, "src"), [
     "main.tsx",
@@ -107,22 +146,18 @@ function findMainCssFile(targetDir) {
     "main.jsx",
     "main.js",
   ]);
-
-  // throw error if file is not found
   if (!mainFile) throw new Error("src/main.* not found in: " + targetDir);
 
   const src = read(mainFile);
-
-  // match: import './index.css'  or  import "./style.css" etc.
   const match = src.match(
     /import\s+(?:[^'"]+\s+from\s+)?['"](\.\/[^'"]+\.css)['"]/,
   );
   if (!match) throw new Error("No css import found in " + mainFile);
 
-  // resolve relative to src/
   return path.join(targetDir, "src", match[1].replace("./", ""));
 }
 
+// adds a css directive line, idempotent, optionally after a sibling line
 function ensureCssLine(cssFile, line, { after } = {}, log) {
   let src = read(cssFile);
 
@@ -141,30 +176,75 @@ function ensureCssLine(cssFile, line, { after } = {}, log) {
   log(`✓ added "${line}" to ${path.basename(cssFile)}`);
 }
 
-// pack appliers
+// ── tsconfig patcher ─────────────────────────────────────────────────────────
+
+function ensureTsconfigAlias(targetDir, log) {
+  const rootConfig = path.join(targetDir, "tsconfig.json");
+  const jsConfig = path.join(targetDir, "jsconfig.json");
+
+  if (fs.existsSync(rootConfig)) {
+    // always patch tsconfig.json 
+    patchTsconfig(rootConfig, log);
+    return;
+  }
+
+  // JS project has jsconfig.json
+  let cfg = fs.existsSync(jsConfig) ? readJson(jsConfig) : {};
+  cfg.compilerOptions ??= {};
+  cfg.compilerOptions.baseUrl ??= ".";
+  cfg.compilerOptions.paths ??= {};
+
+  if (cfg.compilerOptions.paths["@/*"]) {
+    log('› jsconfig.json already has "@/*" alias, skipping');
+    return;
+  }
+
+  cfg.compilerOptions.paths["@/*"] = ["./src/*"];
+  writeJson(jsConfig, cfg);
+  log("✓ ensured jsconfig.json with @/* alias");
+}
+
+function patchTsconfig(file, log) {
+  const raw = read(file)
+    .replace(/\/\/.*$/gm, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  const cfg = JSON.parse(raw);
+
+  cfg.compilerOptions ??= {};
+  cfg.compilerOptions.baseUrl ??= ".";
+  cfg.compilerOptions.paths ??= {};
+
+  if (cfg.compilerOptions.paths["@/*"]) {
+    log(`› ${path.basename(file)} already has "@/*" alias, skipping`);
+    return;
+  }
+
+  cfg.compilerOptions.paths["@/*"] = ["./src/*"];
+  writeJson(file, cfg);
+  log(`✓ patched ${path.basename(file)} with @/* alias`);
+}
+
+// ── pack APPLIERS ─────────────────────────────────────────────────────────────
+
 const APPLIERS = {
   // tailwind (react)
   tailwind: ({ targetDir, log }) => {
-    // 1. patch vite.config
     patchViteConfig(targetDir, {
-      importLine: "import tailwindcss from '@tailwindcss/vite';",
+      importLine: 'import tailwindcss from "@tailwindcss/vite"',
       pluginCall: "tailwindcss()",
       log,
     });
-
-    // 2. prepend @import to main css
     const cssFile = findMainCssFile(targetDir);
     ensureCssLine(cssFile, '@import "tailwindcss";', {}, log);
   },
 
-  // tailwind (vue) — same steps
+  // tailwind (vue) — same
   "tailwind-vue": ({ targetDir, log }) => {
     patchViteConfig(targetDir, {
-      importLine: "import tailwindcss from '@tailwindcss/vite';",
+      importLine: 'import tailwindcss from "@tailwindcss/vite"',
       pluginCall: "tailwindcss()",
       log,
     });
-
     const cssFile = findMainCssFile(targetDir);
     ensureCssLine(cssFile, '@import "tailwindcss";', {}, log);
   },
@@ -180,7 +260,7 @@ const APPLIERS = {
     );
   },
 
-  // daisyui (vue) same
+  // daisyui (vue)
   "daisyui-vue": ({ targetDir, log }) => {
     const cssFile = findMainCssFile(targetDir);
     ensureCssLine(
@@ -190,25 +270,34 @@ const APPLIERS = {
       log,
     );
   },
+
+  // shadcn (react)
+  shadcn: ({ targetDir, log }) => {
+    ensureTsconfigAlias(targetDir, log);
+    patchViteAlias(targetDir, { aliasKey: "@", aliasValue: "./src", log });
+  },
+
+  // shadcn (vue) — same
+  "shadcn-vue": ({ targetDir, log }) => {
+    ensureTsconfigAlias(targetDir, log);
+    patchViteAlias(targetDir, { aliasKey: "@", aliasValue: "./src", log });
+  },
 };
 
-// public API
+// ── public API ───────────────────────────────────────────────────────────────
+
 export async function applyPacks(payload, { log = console.log } = {}) {
   const { packs = [], targetDir } = payload;
 
   if (!targetDir) throw new Error("applyPacks: missing targetDir");
 
   const selectedIds = Array.from(packs);
-
   if (selectedIds.length === 0) {
     log("› no packs to apply, skipping");
     return;
   }
 
-  // respect requires[] order — same order as install
   const ordered = resolvePackOrder(selectedIds);
-
-  // only run appliers that exist for selected packs
   const toApply = ordered.filter((id) => APPLIERS[id]);
 
   if (toApply.length === 0) {

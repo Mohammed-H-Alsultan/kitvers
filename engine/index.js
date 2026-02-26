@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { scaffoldVite } from "./scaffold-vite.js";
-import { installPacks } from "./install-packs.js";
+import { installPacks, runPackCommands } from "./install-packs.js";
 import { applyPacks } from "./apply-packs.js";
 import { writeKitversMeta } from "./write-metadata.js";
 
@@ -19,20 +19,23 @@ process.stdin.on("end", async () => {
     console.log(`› packs:     ${(payload.packs ?? []).join(", ") || "none"}`);
 
     if (payload.framework === "react" || payload.framework === "vue") {
-      // 1. scaffold vite project + install base deps
+      // 1. scaffold vite + install base node_modules
       const { targetDir } = await scaffoldVite(payload, {
         log: (l) => console.log(l),
       });
 
       const effectivePayload = { ...payload, targetDir };
 
-      // 2. install pack deps/devDeps/dlx commands
+      // 2. install pack deps + devDeps
       await installPacks(effectivePayload, { log: (l) => console.log(l) });
 
-      // 3. patch vite.config + css files for packs that need it
+      // 3. patch vite.config + css
       await applyPacks(effectivePayload, { log: (l) => console.log(l) });
 
-      // 4. write .kitvers.json metadata
+      // 4. run dlx/shell commands that need config to exist
+      await runPackCommands(effectivePayload, { log: (l) => console.log(l) });
+
+      // 5. write .kitvers.json
       const metaPath = writeKitversMeta(targetDir, effectivePayload);
       console.log(`✓ wrote ${metaPath}`);
 
