@@ -1,9 +1,10 @@
+import fs from "node:fs";
+import path from "node:path";
 import { runCmd } from "./runner.js";
 import { PACKS, resolvePackOrder } from "./packsData.js";
 
 // ── pm helpers ───────────────────────────────────────────────────────────────
 
-// binary name per pm (windows needs .cmd)
 function pmBin(pm) {
   const isWin = process.platform === "win32";
   const bins = {
@@ -15,7 +16,6 @@ function pmBin(pm) {
   return bins[pm] ?? bins.npm;
 }
 
-// dlx binary per pm
 function dlxBin(pm) {
   const isWin = process.platform === "win32";
   const bins = {
@@ -34,7 +34,6 @@ function dlxArgs(pm, cmdString) {
   return parts;
 }
 
-// build npm install / pnpm add / yarn add / bun add args
 function addArgs(pm, pkgs, dev = false) {
   if (pm === "npm")
     return dev ? ["install", "-D", ...pkgs] : ["install", ...pkgs];
@@ -44,38 +43,135 @@ function addArgs(pm, pkgs, dev = false) {
   return ["install", ...pkgs];
 }
 
-// ── shadcn helpers ───────────────────────────────────────────────────────────
+// ── shadcn option normalization + validation ─────────────────────────────────
 
-// builds a fully non-interactive shadcn init command from packOptions
-function buildShadcnInitArgs(payload) {
-  const o = payload.packOptions?.shadcn ?? {};
+const SHADCN_DEFAULTS = {
+  cliVersion: "latest",
+  baseColor: "neutral",
+  cssVariables: true,
+  srcDir: true,
+  noBaseStyle: false,
+  components: [],
+};
 
-  const baseColor = o.baseColor ?? "neutral";
-  const cssVars =
-    o.cssVariables === false ? "--no-css-variables" : "--css-variables";
-  const srcDir = o.srcDir === false ? "--no-src-dir" : "--src-dir";
-  const baseStyle = o.noBaseStyle === true ? "--no-base-style" : "";
+const VALID_BASE_COLORS = ["neutral", "gray", "zinc", "stone", "slate"];
+
+// validates + fills defaults for packOptions.shadcn
+// warns on bad values and falls back — never throws
+function normalizeShadcnOptions(raw = {}, log) {
+  const o = { ...SHADCN_DEFAULTS };
+
+  // cliVersion — string, used to pin exact CLI version
+  if (raw.cliVersion !== undefined) {
+    if (typeof raw.cliVersion === "string" && raw.cliVersion.trim()) {
+      o.cliVersion = raw.cliVersion.trim();
+    } else {
+      log(
+        `⚠ shadcn: invalid cliVersion, falling back to "${SHADCN_DEFAULTS.cliVersion}"`,
+      );
+    }
+  }
+
+  // baseColor — must be one of the allowed values
+  if (raw.baseColor !== undefined) {
+    if (VALID_BASE_COLORS.includes(raw.baseColor)) {
+      o.baseColor = raw.baseColor;
+    } else {
+      log(
+        `⚠ shadcn: invalid baseColor "${raw.baseColor}", valid: ${VALID_BASE_COLORS.join(", ")}. falling back to "${SHADCN_DEFAULTS.baseColor}"`,
+      );
+    }
+  }
+
+  // booleans — warn on wrong type, fall back to default
+  for (const key of ["cssVariables", "srcDir", "noBaseStyle"]) {
+    if (raw[key] !== undefined) {
+      if (typeof raw[key] === "boolean") {
+        o[key] = raw[key];
+      } else {
+        log(
+          `⚠ shadcn: "${key}" must be a boolean, got ${typeof raw[key]}. falling back to ${SHADCN_DEFAULTS[key]}`,
+        );
+      }
+    }
+  }
+
+  // components — one pass: classify valid/invalid to avoid includes() mismatch after trim
+  if (raw.components !== undefined) {
+    if (!Array.isArray(raw.components)) {
+      log(
+        `⚠ shadcn: "components" must be an array. falling back to empty list`,
+      );
+    } else {
+      const valid = [];
+      const invalid = [];
+
+      for (const c of raw.components) {
+        if (typeof c === "string" && c.trim()) valid.push(c.trim());
+        else invalid.push(c);
+      }
+
+      if (invalid.length > 0) {
+        log(
+          `⚠ shadcn: stripped invalid component entries: ${JSON.stringify(invalid)}`,
+        );
+      }
+
+      o.components = valid;
+    }
+  }
+
+  return o;
+}
+
+// ── shadcn command builders ──────────────────────────────────────────────────
+
+// builds fully non-interactive shadcn init args from normalized options
+function buildShadcnInitArgs(opts) {
+  const ver = opts.cliVersion ?? "latest";
+  const cssVars = opts.cssVariables ? "--css-variables" : "--no-css-variables";
+  const srcDir = opts.srcDir ? "--src-dir" : "--no-src-dir";
+
   const parts = [
-    "shadcn@latest",
+    `shadcn@${ver}`,
     "init",
     "--yes",
     "--template",
     "vite",
     "--base-color",
-    baseColor,
+    opts.baseColor,
     cssVars,
     srcDir,
   ];
 
-  if (baseStyle) parts.push(baseStyle);
+  if (opts.noBaseStyle) parts.push("--no-base-style");
 
-  return parts.filter(Boolean);
+  return parts;
 }
 
-// builds shadcn add <component...> args — non-interactive with --yes
-function buildShadcnAddArgs(components) {
-  if (!Array.isArray(components) || components.length === 0) return null;
-  return ["shadcn@latest", "add", "--yes", ...components];
+// builds shadcn add args from normalized opts — null if no components
+function buildShadcnAddArgs(opts) {
+  if (!opts.components?.length) return null;
+  const ver = opts.cliVersion ?? "latest";
+  return [`shadcn@${ver}`, "add", "--yes", ...opts.components];
+}
+
+// ── idempotency helpers ──────────────────────────────────────────────────────
+
+// true if shadcn init has already run in this project
+function shadcnInitialized(targetDir) {
+  return fs.existsSync(path.join(targetDir, "components.json"));
+}
+
+// returns only components not yet on disk (.tsx or .jsx)
+function missingComponents(targetDir, components) {
+  return components.filter((c) => {
+    const ui = path.join(targetDir, "src", "components", "ui");
+    return (
+      !fs.existsSync(path.join(ui, `${c}.tsx`)) &&
+      !fs.existsSync(path.join(ui, `${c}.jsx`))
+    );
+  });
 }
 
 // ── log cleaner ──────────────────────────────────────────────────────────────
@@ -201,39 +297,46 @@ export async function runPackCommands(payload, { log = console.log } = {}) {
   log(`› running ${commands.length} pack command(s)`);
 
   for (const { packId, kind, cmd } of commands) {
-    // ── shadcn init ──────────────────────────────────────────────────────────
+    // ── shadcn init + add ────────────────────────────────────────────────────
     if (
       packId === "shadcn" &&
       kind === "dlx" &&
       cmd.startsWith("shadcn@latest init")
     ) {
-      log("› [shadcn] running non-interactive init");
+      // normalize + validate — warns on bad values, fills defaults, never throws
+      const opts = normalizeShadcnOptions(payload.packOptions?.shadcn, log);
+      log(`› [shadcn] resolved options: ${JSON.stringify(opts)}`);
 
-      const initArgs = buildShadcnInitArgs(payload);
-      log(`› npx ${initArgs.join(" ")}`);
+      // idempotency: components.json already exists → shadcn was already initialized
+      if (shadcnInitialized(targetDir)) {
+        log("› [shadcn] components.json exists, skipping init");
+      } else {
+        const initArgs = buildShadcnInitArgs(opts);
+        log(`› [shadcn] init: npx ${initArgs.join(" ")}`);
 
-      await runCmd(dlxBin(pm), dlxArgs(pm, initArgs.join(" ")), {
-        cwd: targetDir,
-        onLine: (l) => logCliLine(l, log),
-        onErrorLine: (l) => logCliLine(l, log),
-      });
-
-      log("✓ [shadcn] init done");
-
-      // run shadcn add for any pre-selected components
-      const components = payload.packOptions?.shadcn?.components ?? [];
-      const addArgsList = buildShadcnAddArgs(components);
-
-      if (addArgsList) {
-        log(`› [shadcn] adding components: ${components.join(", ")}`);
-
-        await runCmd(dlxBin(pm), dlxArgs(pm, addArgsList.join(" ")), {
+        await runCmd(dlxBin(pm), dlxArgs(pm, initArgs.join(" ")), {
           cwd: targetDir,
           onLine: (l) => logCliLine(l, log),
           onErrorLine: (l) => logCliLine(l, log),
         });
 
-        log(`✓ [shadcn] components added`);
+        log("✓ [shadcn] init done");
+      }
+
+      // idempotency: only add components missing from disk
+      const toAdd = missingComponents(targetDir, opts.components);
+
+      if (opts.components.length > 0 && toAdd.length === 0) {
+        log("› [shadcn] all components already on disk, skipping add");
+      } else if (toAdd.length > 0) {
+        log(`› [shadcn] adding: ${toAdd.join(", ")}`);
+        const addArgs_ = buildShadcnAddArgs({ ...opts, components: toAdd });
+        await runCmd(dlxBin(pm), dlxArgs(pm, addArgs_.join(" ")), {
+          cwd: targetDir,
+          onLine: (l) => logCliLine(l, log),
+          onErrorLine: (l) => logCliLine(l, log),
+        });
+        log("✓ [shadcn] components added");
       } else {
         log("› [shadcn] no components selected, skipping add");
       }
@@ -241,35 +344,50 @@ export async function runPackCommands(payload, { log = console.log } = {}) {
       continue;
     }
 
-    // ── shadcn-vue init ──────────────────────────────────────────────────────
+    // ── shadcn-vue init + add ────────────────────────────────────────────────
+    // note: shadcn-vue has different CLI options than shadcn/ui — kept separate,
+    // no normalization until shadcn-vue options are confirmed stable
     if (
       packId === "shadcn-vue" &&
       kind === "dlx" &&
       cmd.startsWith("shadcn-vue@latest init")
     ) {
-      log("› [shadcn-vue] running non-interactive init");
-
-      // shadcn-vue supports --yes to skip prompts
-      await runCmd(dlxBin(pm), dlxArgs(pm, "shadcn-vue@latest init --yes"), {
-        cwd: targetDir,
-        onLine: (l) => logCliLine(l, log),
-        onErrorLine: (l) => logCliLine(l, log),
-      });
-
-      log("✓ [shadcn-vue] init done");
-
-      // add any pre-selected components
-      const components = payload.packOptions?.["shadcn-vue"]?.components ?? [];
-      if (components.length > 0) {
-        log(`› [shadcn-vue] adding components: ${components.join(", ")}`);
-        const addCmd = `shadcn-vue@latest add --yes ${components.join(" ")}`;
-
-        await runCmd(dlxBin(pm), dlxArgs(pm, addCmd), {
+      // idempotency: skip init if already done
+      if (shadcnInitialized(targetDir)) {
+        log("› [shadcn-vue] components.json exists, skipping init");
+      } else {
+        await runCmd(dlxBin(pm), dlxArgs(pm, "shadcn-vue@latest init --yes"), {
           cwd: targetDir,
           onLine: (l) => logCliLine(l, log),
           onErrorLine: (l) => logCliLine(l, log),
         });
+        log("✓ [shadcn-vue] init done");
+      }
 
+      // raw component list — minimal validation, no normalization yet
+      const requested = Array.isArray(
+        payload.packOptions?.["shadcn-vue"]?.components,
+      )
+        ? payload.packOptions["shadcn-vue"].components.filter(
+            (c) => typeof c === "string" && c.trim(),
+          )
+        : [];
+
+      const toAdd = missingComponents(targetDir, requested);
+
+      if (requested.length > 0 && toAdd.length === 0) {
+        log("› [shadcn-vue] all components already on disk, skipping add");
+      } else if (toAdd.length > 0) {
+        log(`› [shadcn-vue] adding: ${toAdd.join(", ")}`);
+        await runCmd(
+          dlxBin(pm),
+          dlxArgs(pm, `shadcn-vue@latest add --yes ${toAdd.join(" ")}`),
+          {
+            cwd: targetDir,
+            onLine: (l) => logCliLine(l, log),
+            onErrorLine: (l) => logCliLine(l, log),
+          },
+        );
         log("✓ [shadcn-vue] components added");
       } else {
         log("› [shadcn-vue] no components selected, skipping add");
