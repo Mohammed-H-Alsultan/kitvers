@@ -3,7 +3,7 @@ import AnimatedLink from "../../components/animatedComponents/AnimatedLink";
 import ProjectInfo from "../../components/createComponents/ProjectInfo";
 import ProjectOptions from "../../components/createComponents/ProjectOptions";
 import ProjectPacks from "../../components/createComponents/ProjectPacks";
-import ProjectFooter from "../../components/createComponents/ProjecFooter";
+import ProjectFooter from "../../components/createComponents/ProjectFooter";
 
 export default function Create() {
   const [projectName, setProjectName] = useState("");
@@ -86,7 +86,7 @@ export default function Create() {
 
   return (
     <main>
-      <div className="p-6">
+      <div className="p-6 sticky top-0">
         <AnimatedLink to={"/"} />
       </div>
 

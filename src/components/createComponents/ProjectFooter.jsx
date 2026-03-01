@@ -6,16 +6,17 @@ export default function ProjectFooter({ onReset, payload }) {
   const canCreate =
     payload?.projectName?.length > 0 && payload?.projectPath?.length > 0;
 
-  const handleCreate = () => {
-    if (!canCreate) return;
-    navigate("/create/run", { state: payload });
+  const handleContinue = () => {
+    const hasShadcn = payload.packs?.includes("shadcn");
+    const destination = hasShadcn ? "/create/shadcn-config" : "/create/run";
+    navigate(destination, { state: payload });
   };
 
   return (
     <footer className="fixed bottom-0 bg-zinc-800/20 backdrop-blur-xs w-full p-3 border-t border-zinc-900">
       <div className="flex justify-center items-center">
         <button
-          onClick={handleCreate}
+          onClick={handleContinue}
           disabled={!canCreate}
           className={`btn w-115 rounded-lg ${
             canCreate

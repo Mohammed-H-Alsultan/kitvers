@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Create from "./pages/create/Create";
 import PageTranstion from "./components/animatedComponents/PageTransition";
 import ProjectCreation from "./pages/create/ProjectCreation";
+import ShadcnConfig from "./pages/create/ShadcnConfig";
 
 function App() {
   const location = useLocation();
@@ -25,6 +26,15 @@ function App() {
             element={
               <PageTranstion>
                 <Create />
+              </PageTranstion>
+            }
+          />
+
+          <Route 
+            path="/create/shadcn-config"
+            element={
+              <PageTranstion>
+                <ShadcnConfig />
               </PageTranstion>
             }
           />
