@@ -163,15 +163,62 @@ function shadcnInitialized(targetDir) {
   return fs.existsSync(path.join(targetDir, "components.json"));
 }
 
-// returns only components not yet on disk (.tsx or .jsx)
-function missingComponents(targetDir, components) {
-  return components.filter((c) => {
-    const ui = path.join(targetDir, "src", "components", "ui");
-    return (
-      !fs.existsSync(path.join(ui, `${c}.tsx`)) &&
-      !fs.existsSync(path.join(ui, `${c}.jsx`))
+// ── shadcn-vue config writer ─────────────────────────────────────────────────
+
+function detectCssFile(targetDir) {
+  const candidates = ["main.tsx", "main.ts", "main.jsx", "main.js"];
+  for (const f of candidates) {
+    const full = path.join(targetDir, "src", f);
+    if (!fs.existsSync(full)) continue;
+    const content = fs.readFileSync(full, "utf8");
+    // same regex as apply-packs.js findMainCssFile
+    const match = content.match(
+      /import\s+(?:[^'"]+\s+from\s+)?['"](\.\/[^'"]+\.css)['"]/,
     );
-  });
+    if (match) return `src/${match[1].replace("./", "")}`;
+  }
+  return "src/style.css";
+}
+
+// writes components.json for shadcn-vue, bypassing interactive init entirely
+function writeShadcnVueConfig(targetDir, opts, log) {
+  // TS project = has tsconfig.json AND a main.ts entrypoint
+  const isTS =
+    fs.existsSync(path.join(targetDir, "tsconfig.json")) &&
+    fs.existsSync(path.join(targetDir, "src", "main.ts"));
+
+  // detectCssFile already returns "src/style.css" format
+  const cssFile = detectCssFile(targetDir);
+
+  const config = {
+    $schema: "https://shadcn-vue.com/schema.json",
+    style: "new-york",
+    typescript: isTS,
+    tailwind: {
+      config: "",
+      css: cssFile,
+      baseColor: opts.baseColor ?? "neutral",
+      cssVariables: opts.cssVariables ?? true,
+      prefix: "",
+    },
+    aliases: {
+      components: "@/components",
+      utils: "@/lib/utils",
+      ui: "@/components/ui",
+      lib: "@/lib",
+      composables: "@/composables",
+    },
+  };
+
+  fs.writeFileSync(
+    path.join(targetDir, "components.json"),
+    JSON.stringify(config, null, 2) + "\n",
+    "utf8",
+  );
+
+  log(
+    `✓ [shadcn-vue] wrote components.json (baseColor: ${config.tailwind.baseColor}, css: ${cssFile})`,
+  );
 }
 
 // ── log cleaner ──────────────────────────────────────────────────────────────
@@ -323,20 +370,15 @@ export async function runPackCommands(payload, { log = console.log } = {}) {
         log("✓ [shadcn] init done");
       }
 
-      // idempotency: only add components missing from disk
-      const toAdd = missingComponents(targetDir, opts.components);
-
-      if (opts.components.length > 0 && toAdd.length === 0) {
-        log("› [shadcn] all components already on disk, skipping add");
-      } else if (toAdd.length > 0) {
-        log(`› [shadcn] adding: ${toAdd.join(", ")}`);
-        const addArgs_ = buildShadcnAddArgs({ ...opts, components: toAdd });
+      if (opts.components.length > 0) {
+        log(`› [shadcn] adding: ${opts.components.join(", ")}`);
+        const addArgs_ = buildShadcnAddArgs(opts);
         await runCmd(dlxBin(pm), dlxArgs(pm, addArgs_.join(" ")), {
           cwd: targetDir,
           onLine: (l) => logCliLine(l, log),
           onErrorLine: (l) => logCliLine(l, log),
         });
-        log("✓ [shadcn] components added");
+        log("✓ [shadcn] components done");
       } else {
         log("› [shadcn] no components selected, skipping add");
       }
@@ -344,51 +386,40 @@ export async function runPackCommands(payload, { log = console.log } = {}) {
       continue;
     }
 
-    // ── shadcn-vue init + add ────────────────────────────────────────────────
-    // note: shadcn-vue has different CLI options than shadcn/ui — kept separate,
-    // no normalization until shadcn-vue options are confirmed stable
+    // ── shadcn-vue ───────────────────────────────────────────────────────────
+    // skip interactive init entirely — write components.json ourselves,
     if (
       packId === "shadcn-vue" &&
       kind === "dlx" &&
       cmd.startsWith("shadcn-vue@latest init")
     ) {
-      // idempotency: skip init if already done
+      const vueOpts = payload.packOptions?.["shadcn-vue"] ?? {};
+      const ver = (vueOpts.cliVersion ?? "latest").trim() || "latest";
+
       if (shadcnInitialized(targetDir)) {
-        log("› [shadcn-vue] components.json exists, skipping init");
+        log("› [shadcn-vue] components.json exists, skipping config write");
       } else {
-        await runCmd(dlxBin(pm), dlxArgs(pm, "shadcn-vue@latest init --yes"), {
-          cwd: targetDir,
-          onLine: (l) => logCliLine(l, log),
-          onErrorLine: (l) => logCliLine(l, log),
-        });
-        log("✓ [shadcn-vue] init done");
+        // write components.json directly — no interactive prompts
+        writeShadcnVueConfig(targetDir, vueOpts, log);
       }
 
-      // raw component list — minimal validation, no normalization yet
-      const requested = Array.isArray(
-        payload.packOptions?.["shadcn-vue"]?.components,
-      )
-        ? payload.packOptions["shadcn-vue"].components.filter(
-            (c) => typeof c === "string" && c.trim(),
-          )
+      // pass all components to CLI, it handles existing files gracefully
+      const requested = Array.isArray(vueOpts.components)
+        ? vueOpts.components.filter((c) => typeof c === "string" && c.trim())
         : [];
 
-      const toAdd = missingComponents(targetDir, requested);
-
-      if (requested.length > 0 && toAdd.length === 0) {
-        log("› [shadcn-vue] all components already on disk, skipping add");
-      } else if (toAdd.length > 0) {
-        log(`› [shadcn-vue] adding: ${toAdd.join(", ")}`);
+      if (requested.length > 0) {
+        log(`› [shadcn-vue] adding: ${requested.join(", ")}`);
         await runCmd(
           dlxBin(pm),
-          dlxArgs(pm, `shadcn-vue@latest add --yes ${toAdd.join(" ")}`),
+          dlxArgs(pm, `shadcn-vue@${ver} add --yes ${requested.join(" ")}`),
           {
             cwd: targetDir,
             onLine: (l) => logCliLine(l, log),
             onErrorLine: (l) => logCliLine(l, log),
           },
         );
-        log("✓ [shadcn-vue] components added");
+        log("✓ [shadcn-vue] components done");
       } else {
         log("› [shadcn-vue] no components selected, skipping add");
       }
