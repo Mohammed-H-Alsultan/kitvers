@@ -79,9 +79,8 @@ export default function Create() {
     language: selectedLanguage,
     packageManager,
     packs: Array.from(selectedPacks),
+    packOptions: {},
     options,
-    createdAt: new Date().toISOString(),
-    tool: { name: "kitvers", version: "0.1.0" },
   };
 
   return (

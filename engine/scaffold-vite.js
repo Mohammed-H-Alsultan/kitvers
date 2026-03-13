@@ -60,10 +60,11 @@ export async function scaffoldVite(payload, { log = console.log } = {}) {
   const pm = packageManager ?? "npm";
 
   // bun uses bunx create-vite, others use <pm> create vite@latest
+  // NOTE: I changed vite@latest to vite@6 cuz I think vite-8 doesn't support tailwind yet
   if (pm === "bun") {
     await runCmd(
       "bunx",
-      ["create-vite@latest", projectName, "--template", template],
+      ["create-vite@6", projectName, "--template", template],
       {
         cwd: projectPath,
         onLine: (l) => log(`› ${l}`),
@@ -74,7 +75,7 @@ export async function scaffoldVite(payload, { log = console.log } = {}) {
     const cmd = pmCmd(pm);
     await runCmd(
       cmd,
-      ["create", "vite@latest", projectName, "--", "--template", template],
+      ["create", "vite@6", projectName, "--", "--template", template],
       {
         cwd: projectPath,
         onLine: (l) => log(`› ${l}`),

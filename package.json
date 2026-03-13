@@ -4,14 +4,16 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "build:engine": "pkg engine/index.js --target node18-win-x64 --output src-tauri/binaries/node-engine-x86_64-pc-windows-msvc.exe",
+    "tauri": "tauri",
     "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "build": "vite build"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.0",
     "@tauri-apps/plugin-dialog": "^2.6.0",
+    "@tauri-apps/plugin-opener": "^2.5.3",
+    "@tauri-apps/plugin-shell": "^2.3.5",
     "daisyui": "^5.5.18",
     "motion": "^12.34.2",
     "react": "^19.2.0",
@@ -35,5 +37,12 @@
   },
   "overrides": {
     "mini-css-extract-plugin": "2.4.7"
+  },
+  "pkg": {
+    "scripts": "engine/**/*.js",
+    "targets": [
+      "node18-win-x64"
+    ],
+    "outputPath": "src-tauri/binaries"
   }
 }

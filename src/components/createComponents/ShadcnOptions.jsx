@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 
-// all components the user can pre-install
 const AVAILABLE_COMPONENTS = [
   { id: "button", label: "Button", desc: "Core interactive element" },
   { id: "input", label: "Input", desc: "Text input field" },
@@ -18,7 +17,6 @@ const AVAILABLE_COMPONENTS = [
 
 const BASE_COLORS = ["neutral", "gray", "zinc", "stone", "slate"];
 
-// color preview swatches
 const COLOR_SWATCHES = {
   neutral: "bg-neutral-500",
   gray: "bg-gray-500",
@@ -31,16 +29,19 @@ export default function ShadcnOptions() {
   const { state } = useLocation();
   const navigate = useNavigate();
 
-  // if no payload came from /create, go back
   if (!state) {
     navigate("/create", { replace: true });
     return null;
   }
 
+  // detect framework
+  const isVue = state.framework === "vue";
+  const packKey = isVue ? "shadcn-vue" : "shadcn";
+
   const [baseColor, setBaseColor] = useState("neutral");
   const [cssVariables, setCssVariables] = useState(true);
-  const [srcDir, setSrcDir] = useState(true);
-  const [noBaseStyle, setNoBaseStyle] = useState(false);
+  const [srcDir, setSrcDir] = useState(true); // react only
+  const [noBaseStyle, setNoBaseStyle] = useState(false); // react only
   const [cliVersion, setCliVersion] = useState("latest");
   const [components, setComponents] = useState(new Set());
 
@@ -52,27 +53,67 @@ export default function ShadcnOptions() {
     });
 
   const handleContinue = () => {
-    const payload = {
-      ...state,
-      packOptions: {
-        ...state.packOptions,
-        shadcn: {
+    const shadcnOpts = isVue
+      ? {
+          cliVersion: cliVersion.trim() || "latest",
+          baseColor,
+          cssVariables,
+          components: Array.from(components),
+        }
+      : {
           cliVersion: cliVersion.trim() || "latest",
           baseColor,
           cssVariables,
           srcDir,
           noBaseStyle,
           components: Array.from(components),
-        },
+        };
+
+    const payload = {
+      ...state,
+      packOptions: {
+        ...state.packOptions,
+        [packKey]: shadcnOpts,
       },
     };
+
     navigate("/create/run", { state: payload });
   };
+
+  // toggles — react-only ones are hidden for vue
+  const toggleOptions = [
+    {
+      key: "cssVariables",
+      label: "CSS Variables",
+      desc: "Use CSS vars for theming",
+      value: cssVariables,
+      set: setCssVariables,
+      show: true,
+    },
+    {
+      key: "srcDir",
+      label: "src/ directory",
+      desc: "Output inside src/",
+      value: srcDir,
+      set: setSrcDir,
+      show: !isVue,
+    },
+    {
+      key: "noBaseStyle",
+      label: "No base style",
+      desc: "Skip installing base shadcn style",
+      value: noBaseStyle,
+      set: setNoBaseStyle,
+      show: !isVue,
+    },
+  ].filter((o) => o.show);
 
   return (
     <main>
       <div className="p-5 mt-3 text-center">
-        <h1 className="text-4xl font-jetbrains font-bold">shadcn/ui config</h1>
+        <h1 className="text-4xl font-jetbrains font-bold">
+          {isVue ? "shadcn-vue config" : "shadcn/ui config"}
+        </h1>
         <p className="text-zinc-500 font-mono text-sm mt-2">
           Customize how your UI components are created and styled
         </p>
@@ -108,34 +149,15 @@ export default function ShadcnOptions() {
             </div>
           </div>
 
-          {/* toggle */}
+          {/* toggles */}
           <div className="bg-[#0e0e0e] border border-zinc-800 rounded-xl p-6 font-mono">
             <p className="text-xs text-zinc-500 tracking-widest uppercase mb-4">
               Options
             </p>
             <div className="flex flex-col gap-3">
-              {[
-                {
-                  label: "CSS Variables",
-                  desc: "Use CSS vars for theming",
-                  value: cssVariables,
-                  set: setCssVariables,
-                },
-                {
-                  label: "src/ directory",
-                  desc: "Output inside src/",
-                  value: srcDir,
-                  set: setSrcDir,
-                },
-                {
-                  label: "No base style",
-                  desc: "Skip installing base shadcn style",
-                  value: noBaseStyle,
-                  set: setNoBaseStyle,
-                },
-              ].map(({ label, desc, value, set }) => (
+              {toggleOptions.map(({ key, label, desc, value, set }) => (
                 <button
-                  key={label}
+                  key={key}
                   onClick={() => set((v) => !v)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-all duration-200 cursor-pointer group ${
                     value
@@ -143,13 +165,8 @@ export default function ShadcnOptions() {
                       : "border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
                   }`}
                 >
-                  {/* toggle pill */}
                   <div
-                    className={`w-8 h-4 rounded-full border flex items-center transition-all duration-200 shrink-0 ${
-                      value
-                        ? "bg-white border-white"
-                        : "bg-transparent border-zinc-600"
-                    }`}
+                    className={`w-8 h-4 rounded-full border flex items-center transition-all duration-200 shrink-0 ${value ? "bg-white border-white" : "bg-transparent border-zinc-600"}`}
                   >
                     <motion.div
                       animate={{ x: value ? 16 : 2 }}
@@ -217,13 +234,8 @@ export default function ShadcnOptions() {
                         : "border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
                     }`}
                   >
-                    {/* checkbox style indicator */}
                     <div
-                      className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all duration-200 ${
-                        isOn
-                          ? "bg-white border-white"
-                          : "bg-transparent border-zinc-600"
-                      }`}
+                      className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all duration-200 ${isOn ? "bg-white border-white" : "bg-transparent border-zinc-600"}`}
                     >
                       <AnimatePresence>
                         {isOn && (
@@ -262,8 +274,6 @@ export default function ShadcnOptions() {
                 );
               })}
             </div>
-
-            {/* empty state */}
             {components.size === 0 && (
               <p className="text-xs text-zinc-700 mt-3">
                 no components selected — you can add them later with{" "}
@@ -272,7 +282,7 @@ export default function ShadcnOptions() {
             )}
           </div>
 
-          {/* continue button */}
+          {/* continue */}
           <div className="flex justify-end mt-2">
             <button
               onClick={handleContinue}

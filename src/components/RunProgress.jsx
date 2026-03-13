@@ -1,5 +1,6 @@
 // TEMP file (Just UI)
 
+import { useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiCheckCircle, FiXCircle, FiCopy, FiFolder } from "react-icons/fi";
 import { VscLoading } from "react-icons/vsc";
@@ -35,6 +36,12 @@ export default function RunProgress({
   onOpenFolder,
 }) {
   const navigate = useNavigate();
+  const logEndRef = useRef(null);
+
+  // auto-scroll to bottom when new logs arrive
+  useEffect(() => {
+    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logs]);
 
   const done = completedSteps ?? new Set();
   const lines = logs ?? [];
@@ -175,6 +182,7 @@ export default function RunProgress({
                 <span className="w-1 h-1 rounded-full bg-zinc-700 animate-bounce [animation-delay:300ms]" />
               </div>
             )}
+            <div ref={logEndRef} />
           </div>
         </div>
 

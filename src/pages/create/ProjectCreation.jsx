@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Command } from "@tauri-apps/plugin-shell";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import RunProgress from "../../components/RunProgress";
 import AnimatedLink from "../../components/animatedComponents/AnimatedLink";
 
@@ -7,33 +9,110 @@ const STEPS = [
   { id: "scaffold", label: "Scaffolding project" },
   { id: "deps", label: "Installing dependencies" },
   { id: "configs", label: "Applying configs" },
-  { id: "templates", label: "Adding templates" },
-  { id: "checks", label: "Running checks" },
+  { id: "packs", label: "Running pack commands" },
+  { id: "meta", label: "Writing metadata" },
 ];
 
-// TEMP: fake run (Later I will add the real engine)
-function fakeRun({ onLog, onStep, onDone, onFail }) {
-  let cancelled = false;
+const STEP_TRIGGERS = [
+  { pattern: "scaffold complete", step: 1 },
+  { pattern: "pack deps installed", step: 2 },
+  { pattern: "all pack configs applied", step: 3 },
+  { pattern: "pack command", step: 3 },
+  { pattern: "wrote .kitvers", step: 4 },
+];
 
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function detectStep(line) {
+  const low = line.toLowerCase();
+  for (const { pattern, step } of STEP_TRIGGERS) {
+    if (low.includes(pattern)) return step;
+  }
+  return null;
+}
+
+const IS_DEV = import.meta.env.DEV;
+
+// strip ANSI escape codes from CLI output (colors, cursor moves, etc.)
+// eslint-disable-next-line no-control-regex
+const ANSI_RE = /\x1b\[[0-9;]*[a-zA-Z]|\x1b\].*?(?:\x07|\x1b\\)/g;
+const stripAnsi = (s) => s.replace(ANSI_RE, "");
+
+// lines the user doesn't need to see — debug dumps, normalization, engine internals
+const HIDDEN_PATTERNS = [
+  "[debug]", // debug-only output
+  "normalized payload", // payload dump
+  "engine started", // redundant — UI already shows "Creating project…"
+  '"projectName"', // JSON payload lines
+  '"projectPath"',
+  '"framework"',
+  '"language"',
+  '"packageManager"',
+  '"packs"',
+  '"packOptions"',
+  '"options"',
+  '"debug"',
+];
+
+function shouldHideLine(line) {
+  const low = line.toLowerCase();
+  return HIDDEN_PATTERNS.some((p) => low.includes(p));
+}
+
+function runEngine({ payload, onLog, onStep, onDone, onFail }) {
+  let cancelled = false;
 
   (async () => {
     try {
-      onLog("› starting…");
-      for (let i = 0; i < STEPS.length; i++) {
+      const jsonPayload = JSON.stringify(payload);
+      const cmd = IS_DEV
+        ? Command.create("node", ["../engine/index.js"], { stdin: "pipe" })
+        : Command.sidecar("binaries/node-engine", [], { stdin: "pipe" });
+
+      let result = null;
+
+      cmd.stdout.on("data", (line) => {
         if (cancelled) return;
-        onStep(i);
-        onLog(`› ${STEPS[i].label}`);
-        await sleep(700);
-        onLog("✓ done");
-        await sleep(250);
-      }
+        const trimmed = stripAnsi(line).trim();
+        if (!trimmed) return;
+
+        if (trimmed.startsWith("__KITVERS_RESULT__=")) {
+          try {
+            result = JSON.parse(trimmed.slice("__KITVERS_RESULT__=".length));
+          } catch {
+            /* ignore */
+          }
+          return;
+        }
+
+        // skip debug/internal lines from user-facing logs
+        if (!shouldHideLine(trimmed)) {
+          onLog(trimmed);
+        }
+        const step = detectStep(trimmed);
+        if (step !== null) onStep(step);
+      });
+
+      cmd.stderr.on("data", (line) => {
+        if (cancelled) return;
+        const trimmed = stripAnsi(line).trim();
+        if (trimmed) onLog(`✗ ${trimmed}`);
+      });
+
+      const child = await cmd.spawn();
+      await child.write(jsonPayload + "\n");
+
+      const exitCode = await new Promise((res) => {
+        cmd.on("close", ({ code }) => res(code));
+      });
+
       if (cancelled) return;
-      onLog("✓ all complete");
-      onDone();
-    } catch (e) {
-      onLog(`✗ ${e?.message ?? "unknown error"}`);
-      onFail();
+
+      if (exitCode === 0 && result?.ok) {
+        onDone(result);
+      } else {
+        onFail(result?.error ?? "engine exited with code " + exitCode);
+      }
+    } catch (err) {
+      if (!cancelled) onFail(err?.message ?? "unknown error");
     }
   })();
 
@@ -42,7 +121,7 @@ function fakeRun({ onLog, onStep, onDone, onFail }) {
   };
 }
 
-export default function RunProject() {
+export default function ProjectCreation() {
   const { state } = useLocation();
   const navigate = useNavigate();
 
@@ -52,12 +131,22 @@ export default function RunProject() {
 
   const payload = state;
 
-  const [phase, setPhase] = useState("running"); 
+  const [phase, setPhase] = useState("running");
   const [activeStep, setActiveStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState(() => new Set());
   const [logs, setLogs] = useState([]);
+  const [resultDir, setResultDir] = useState(null);
 
   const canShow = useMemo(() => Boolean(payload), [payload]);
+  const appendLog = (line) => setLogs((prev) => [...prev, line]);
+  const advanceStep = (i) => {
+    setActiveStep(i);
+    setCompletedSteps((prev) => {
+      const next = new Set(prev);
+      for (let s = 0; s < i; s++) next.add(s);
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!payload) return;
@@ -65,29 +154,30 @@ export default function RunProject() {
     setPhase("running");
     setActiveStep(0);
     setCompletedSteps(new Set());
+    setResultDir(null);
     setLogs([
-      `› project: ${payload.projectName || "untitled"}`,
-      `› path: ${payload.projectPath || "-"}`,
+      `› project:   ${payload.projectName || "untitled"}`,
+      `› path:      ${payload.projectPath || "-"}`,
       `› framework: ${payload.framework}`,
-      `› pm: ${payload.packageManager}`,
-      `› packs: ${(payload.packs ?? []).join(", ") || "none"}`,
+      `› language:  ${payload.language}`,
+      `› pm:        ${payload.packageManager}`,
+      `› packs:     ${(payload.packs ?? []).join(", ") || "none"}`,
     ]);
 
-    const stop = fakeRun({
-      onLog: (line) => setLogs((prev) => [...prev, line]),
-      onStep: (i) => {
-        setActiveStep(i);
-        setCompletedSteps((prev) => {
-          const next = new Set(prev);
-          if (i > 0) next.add(i - 1);
-          return next;
-        });
-      },
-      onDone: () => {
-        setCompletedSteps(() => new Set(STEPS.map((_, i) => i)));
+    const stop = runEngine({
+      payload,
+      onLog: appendLog,
+      onStep: advanceStep,
+      onDone: (result) => {
+        advanceStep(STEPS.length);
+        setCompletedSteps(new Set(STEPS.map((_, i) => i)));
+        setResultDir(result?.targetDir ?? null);
         setPhase("success");
       },
-      onFail: () => setPhase("error"),
+      onFail: (msg) => {
+        if (msg) appendLog(`✗ ${msg}`);
+        setPhase("error");
+      },
     });
 
     return stop;
@@ -96,20 +186,24 @@ export default function RunProject() {
   const onCopyLogs = async () => {
     try {
       await navigator.clipboard.writeText(logs.join("\n"));
-      setLogs((prev) => [...prev, "✓ copied logs"]);
+      appendLog("✓ copied logs");
     } catch {
-      setLogs((prev) => [...prev, "✗ failed to copy logs"]);
+      appendLog("✗ failed to copy logs");
     }
   };
 
   const onCancel = () => {
-    setLogs((prev) => [...prev, "✗ cancelled"]);
+    appendLog("✗ cancelled");
     setPhase("error");
   };
 
-  const onOpenFolder = () => {
-    // TEMP later tauri open path
-    setLogs((prev) => [...prev, "› open folder (todo)"]);
+  const onOpenFolder = async () => {
+    if (!resultDir) return;
+    try {
+      await revealItemInDir(resultDir);
+    } catch {
+      appendLog("✗ could not open folder");
+    }
   };
 
   if (!canShow) return null;

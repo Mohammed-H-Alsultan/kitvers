@@ -127,24 +127,23 @@ function normalizeShadcnOptions(raw = {}, log) {
 // ── shadcn command builders ──────────────────────────────────────────────────
 
 // builds fully non-interactive shadcn init args from normalized options
+// shadcn CLI v4 (March 2026) removed --base-color, --src-dir, --no-base-style
+// colors are now configured via --preset or defaults
 function buildShadcnInitArgs(opts) {
   const ver = opts.cliVersion ?? "latest";
   const cssVars = opts.cssVariables ? "--css-variables" : "--no-css-variables";
-  const srcDir = opts.srcDir ? "--src-dir" : "--no-src-dir";
 
   const parts = [
     `shadcn@${ver}`,
     "init",
     "--yes",
+    "--defaults",
     "--template",
     "vite",
-    "--base-color",
-    opts.baseColor,
+    "--base",
+    "radix",
     cssVars,
-    srcDir,
   ];
-
-  if (opts.noBaseStyle) parts.push("--no-base-style");
 
   return parts;
 }

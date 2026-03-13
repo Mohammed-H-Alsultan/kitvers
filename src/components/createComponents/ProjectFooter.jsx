@@ -7,8 +7,13 @@ export default function ProjectFooter({ onReset, payload }) {
     payload?.projectName?.length > 0 && payload?.projectPath?.length > 0;
 
   const handleContinue = () => {
-    const hasShadcn = payload.packs?.includes("shadcn");
-    const destination = hasShadcn ? "/create/shadcn-config" : "/create/run";
+    const needsShadcnConfig =
+      payload.packs?.includes("shadcn") ||
+      payload.packs?.includes("shadcn-vue");
+
+    const destination = needsShadcnConfig
+      ? "/create/shadcn-config"
+      : "/create/run";
     navigate(destination, { state: payload });
   };
 
